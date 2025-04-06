@@ -1,0 +1,19 @@
+{{ define "home" }}
+    {{ template "base" . }}
+{{ end }}
+
+{{ define "title" }}Home Page{{ end }}
+
+{{ define "content" }}
+<div class="home-content">
+    <h1 class="text-red-400 text-lg">Welcome to our site!</h1>
+    <p>This is the home page content.</p>
+    <!-- More home page specific content -->
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+    // Any home-page specific JavaScript
+</script>
+{{ end }}
