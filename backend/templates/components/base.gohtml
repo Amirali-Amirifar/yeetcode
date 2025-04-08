@@ -1,6 +1,6 @@
 {{ define "base" }}
-    <!DOCTYPE html>
-    <html lang="en">
+<!DOCTYPE html>
+<html lang="en">
     <head>
         <title>{{ block "title" . }}Default Title{{ end }}</title>
         <link rel="stylesheet" href="/static/css/out.css"/>
@@ -8,21 +8,17 @@
         {{ block "head" . }}{{ end }}
     </head>
     <body>
-    <header>
-        <!-- Common header content -->
-    </header>
-
+    {{ template "header" .}}
     <main>
-        {{ block "content" . }}
-            <p>Default content - this will be replaced</p>
-        {{ end }}
+        {{ template "content" . }}
+
     </main>
 
     <footer>
         <!-- Common footer content -->
     </footer>
 
-    {{/*    {{ block "scripts" . }}{{ end }}*/}}
+{{/*    {{ block "scripts" . }}{{ end }}*/}}
     </body>
-    </html>
+</html>
 {{ end }}

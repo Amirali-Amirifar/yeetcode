@@ -1,2 +1,3 @@
 node_modules
-
+tmp
+/cmd/gin-bin

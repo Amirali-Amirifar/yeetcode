@@ -1,15 +1,86 @@
 {{ define "home" }}
     {{ template "base" . }}
 {{ end }}
-
 {{ define "title" }}Home Page{{ end }}
 
 {{ define "content" }}
-<div class="home-content">
-    <h1 class="text-red-400 text-lg">Welcome to our site!</h1>
-    <p>This is the home page content.</p>
-    <!-- More home page specific content -->
+<div class="min-h-screen flex flex-col">
+    <div class="w-full bg-white h-[400px] flex flex-col items-center justify-center">
+        <h1 class="text-4xl font-bold text-gray-800">Welcome to LeetCode Clone</h1>
+        <p class="mt-4 text-lg text-gray-600">Practice your coding skills with a variety of challenges.</p>
+        <a href="/problems" class="mt-6 px-6 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition duration-300">Start Solving Problems</a>
+    </div>
+
+    <div class="container mx-auto mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
+        <div class="bg-white p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+            <h2 class="text-xl font-semibold text-gray-800">Easy Problems</h2>
+            <p class="mt-2 text-gray-600">Start with easy problems to build your confidence.</p>
+            <a href="/problems/easy" class="mt-4 inline-block px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition duration-300">Explore</a>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+            <h2 class="text-xl font-semibold text-gray-800">Medium Problems</h2>
+            <p class="mt-2 text-gray-600">Challenge yourself with medium-level problems.</p>
+            <a href="/problems/medium" class="mt-4 inline-block px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition duration-300">Explore</a>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+            <h2 class="text-xl font-semibold text-gray-800">Hard Problems</h2>
+            <p class="mt-2 text-gray-600">Tackle hard problems to test your skills.</p>
+            <a href="/problems/hard" class="mt-4 inline-block px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition duration-300">Explore</a>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+            <h2 class="text-xl font-semibold text-gray-800">Featured Challenges</h2>
+            <p class="mt-2 text-gray-600">Check out our featured challenges for extra practice.</p>
+            <a href="/problems/featured" class="mt-4 inline-block px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition duration-300">Explore</a>
+        </div>
+    </div>
+
+    <!-- New Latest Problems and Courses Section -->
+    <div class="container mx-auto mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-gray-100 p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold text-gray-800">Latest Problems</h2>
+            <ul class="mt-4">
+                <li class="mt-2">
+                    <a href="/problems/1" class="text-blue-600 hover:underline">Two Sum</a> - Find two numbers that add up to a specific target.
+                </li>
+                <li class="mt-2">
+                    <a href="/problems/2" class="text-blue-600 hover:underline">Reverse Linked List</a> - Reverse a singly linked list.
+                </li>
+                <li class="mt-2">
+                    <a href="/problems/3" class="text-blue-600 hover:underline">Valid Parentheses</a> - Determine if the input string is valid.
+                </li>
+                <li class="mt-2">
+                    <a href="/problems/4" class="text-blue-600 hover:underline">Merge Two Sorted Lists</a> - Merge two sorted linked lists.
+                </li>
+            </ul>
+        </div>
+        <div class="bg-gray-100 p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold text-gray-800">Courses</h2>
+            <ul class="mt-4">
+                <li class="mt-2">
+                    <a href="/courses/1" class="text-blue-600 hover:underline">Introduction to Algorithms</a> - Learn the basics of algorithms and data structures.
+                </li>
+                <li class="mt-2">
+                    <a href="/courses/2" class="text-blue-600 hover:underline">Data Structures in Depth</a> - Explore various data structures and their applications.
+                </li>
+                <li class="mt-2">
+                    <a href="/courses/3" class="text-blue-600 hover:underline">Dynamic Programming</a> - Master the techniques of dynamic programming.
+                </li>
+                <li class="mt-2">
+                    <a href="/courses/4" class="text-blue-600 hover:underline">System Design Basics</a> - Understand the fundamentals of system design.
+                </li>
+            </ul>
+        </div>
+    </div>
+
 </div>
+<footer class="mt-auto bg-gray-800 text-white py-4">
+    <div class="container mx-auto text-center">
+        <p>&copy; 2025 LeetCode Clone. All rights reserved.</p>
+    </div>
+</footer>
+
+{{/*    {{.}}*/}}
+    <!-- More home page specific content -->
 {{ end }}
 
 {{ define "scripts" }}

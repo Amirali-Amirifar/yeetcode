@@ -18,11 +18,24 @@ func main() {
 	router := gin.Default()
 	router.SetFuncMap(template.FuncMap{
 		"formatAsDate": formatAsDate,
+		"isLoggedIn": func() bool {
+			fmt.Println("isLoggedIn")
+			return true
+		},
 	})
 	router.LoadHTMLGlob("./templates/**/*")
 
+	//router.GET("/login", func(c *gin.Context) {
+	//	c.HTML(http.StatusOK, "login", gin.H{
+	//		"title": "Login",
+	//		"page":  "Login",
+	//	})
+	//})
 	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "home", gin.H{})
+		c.HTML(http.StatusOK, "home", gin.H{
+			"title": "Home",
+			"page":  "home",
+		})
 	})
 
 	router.Static("/static", "./static")
