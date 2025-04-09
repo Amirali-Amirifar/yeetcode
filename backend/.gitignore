@@ -1,3 +1,5 @@
 node_modules
 tmp
 /cmd/gin-bin
+/static/dist/
+package-lock.json
