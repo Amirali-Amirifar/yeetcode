@@ -23,18 +23,40 @@ func main() {
 			return true
 		},
 	})
-	router.LoadHTMLGlob("./templates/**/*")
 
-	//router.GET("/login", func(c *gin.Context) {
-	//	c.HTML(http.StatusOK, "login", gin.H{
-	//		"title": "Login",
-	//		"page":  "Login",
-	//	})
-	//})
+	router.LoadHTMLGlob("templates/**/*")
+
 	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "home", gin.H{
+		c.HTML(http.StatusOK, "home.gohtml", gin.H{
 			"title": "Home",
 			"page":  "home",
+		})
+	})
+	router.GET("/login", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "login.gohtml", gin.H{
+			"title": "Login",
+			"page":  "Login",
+		})
+	})
+	router.GET("/signup", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "signup.gohtml", gin.H{
+			"title": "Login",
+			"page":  "Login",
+		})
+	})
+
+	router.GET("/problems", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "problems.gohtml", gin.H{
+			"title": "Login",
+			"page":  "Login",
+		})
+	})
+	router.GET("/problems/:problem", func(c *gin.Context) {
+
+		c.HTML(http.StatusOK, "problem.gohtml", gin.H{
+
+			"title": "Login",
+			"page":  "Login",
 		})
 	})
 
