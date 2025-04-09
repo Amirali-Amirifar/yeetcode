@@ -1,10 +1,7 @@
-{{ define "home" }}
-    {{ template "base" . }}
-{{ end }}
-{{ define "title" }}Home Page{{ end }}
+{{ template "header" .}}
 
-{{ define "content" }}
-<div class="min-h-screen flex flex-col">
+
+<div class="min-h-screen flex flex-col bg-blue-700">
     <div class="w-full bg-white h-[400px] flex flex-col items-center justify-center">
         <h1 class="text-4xl font-bold text-gray-800">Welcome to LeetCode Clone</h1>
         <p class="mt-4 text-lg text-gray-600">Practice your coding skills with a variety of challenges.</p>
@@ -73,18 +70,6 @@
     </div>
 
 </div>
-<footer class="mt-auto bg-gray-800 text-white py-4">
-    <div class="container mx-auto text-center">
-        <p>&copy; 2025 LeetCode Clone. All rights reserved.</p>
-    </div>
-</footer>
 
-{{/*    {{.}}*/}}
-    <!-- More home page specific content -->
-{{ end }}
 
-{{ define "scripts" }}
-<script>
-    // Any home-page specific JavaScript
-</script>
-{{ end }}
+{{ template "footer" .}}
