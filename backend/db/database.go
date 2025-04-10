@@ -2,12 +2,11 @@ package db
 
 import (
 	"fmt"
+	"github.com/Amirali-Amirifar/yeetcode/backend/config"
 	"log"
-	"os"
 	"time"
 
-	"github.com/joho/godotenv"
-	"golang.org/x/crypto/bcrypt"
+	_ "golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -67,22 +66,11 @@ type TestCase struct {
 
 // Init initializes the database and runs the migrations
 func Init() *gorm.DB {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-	dbSSLMode := os.Getenv("DB_SSLMODE")
-
+	conf := config.GetConfig()
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		dbHost, dbPort, dbUser, dbPassword, dbName, dbSSLMode)
+		conf.DbHost, conf.DbPort, conf.DbUser, conf.DbPassword, conf.DbName, conf.DbSSLMode)
 
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	DB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to the database:", err)
 	}
@@ -94,4 +82,3 @@ func Init() *gorm.DB {
 
 	return DB
 }
-

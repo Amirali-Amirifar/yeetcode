@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/Amirali-Amirifar/yeetcode/backend/config"
+	"github.com/Amirali-Amirifar/yeetcode/backend/handlers"
 	"html/template"
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,9 @@ func formatAsDate(t time.Time) string {
 }
 
 func main() {
+	// Initialize config
+	config.GetConfig()
+
 	router := gin.Default()
 	router.SetFuncMap(template.FuncMap{
 		"formatAsDate": formatAsDate,
@@ -26,40 +30,8 @@ func main() {
 
 	router.LoadHTMLGlob("templates/**/*")
 
-	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "home.gohtml", gin.H{
-			"title": "Home",
-			"page":  "home",
-		})
-	})
-	router.GET("/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "login.gohtml", gin.H{
-			"title": "Login",
-			"page":  "Login",
-		})
-	})
-	router.GET("/signup", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "signup.gohtml", gin.H{
-			"title": "Login",
-			"page":  "Login",
-		})
-	})
-
-	router.GET("/problems", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "problems.gohtml", gin.H{
-			"title": "Login",
-			"page":  "Login",
-		})
-	})
-	router.GET("/problems/:problem", func(c *gin.Context) {
-
-		c.HTML(http.StatusOK, "problem.gohtml", gin.H{
-
-			"title": "Login",
-			"page":  "Login",
-		})
-	})
+	handlers.InitHandlers(router)
 
 	router.Static("/static", "./static")
-	router.Run(":8080")
+	router.Run(fmt.Sprintf(":%s", config.GetConfig().ServerPort))
 }
