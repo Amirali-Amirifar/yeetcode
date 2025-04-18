@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/Amirali-Amirifar/yeetcode/backend/config"
-	"github.com/Amirali-Amirifar/yeetcode/backend/handlers"
 	"html/template"
 	"time"
+
+	"github.com/Amirali-Amirifar/yeetcode/backend/config"
+	"github.com/Amirali-Amirifar/yeetcode/backend/db"
+	"github.com/Amirali-Amirifar/yeetcode/backend/handlers"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,8 +18,8 @@ func formatAsDate(t time.Time) string {
 }
 
 func main() {
-	// Initialize config
 	config.GetConfig()
+	db.Init()
 
 	router := gin.Default()
 	router.SetFuncMap(template.FuncMap{

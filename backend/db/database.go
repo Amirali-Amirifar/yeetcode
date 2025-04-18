@@ -2,9 +2,10 @@ package db
 
 import (
 	"fmt"
-	"github.com/Amirali-Amirifar/yeetcode/backend/config"
 	"log"
 	"time"
+
+	"github.com/Amirali-Amirifar/yeetcode/backend/config"
 
 	_ "golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
@@ -20,6 +21,10 @@ type User struct {
 	Role      string `gorm:"default:'user';not null"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	// Relationships
+	Questions   []*Question   `gorm:"foreignKey:OwnerId"`
+	Submissions []*Submission `gorm:"foreignKey:UserId"`
+	Stats       *UserStats    `gorm:"foreignKey:UserId"`
 }
 
 type Question struct {
@@ -33,6 +38,10 @@ type Question struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	PublishedAt *time.Time
+	// Relationships
+	Owner       *User         `gorm:"foreignKey:OwnerId"`
+	Submissions []*Submission `gorm:"foreignKey:QuestionId"`
+	TestCases   []*TestCase   `gorm:"foreignKey:QuestionId"`
 }
 
 type Submission struct {
@@ -45,6 +54,9 @@ type Submission struct {
 	UserId      uint   `gorm:"not null"`
 	CreatedAt   time.Time
 	ProcessedAt *time.Time
+	// Relationships
+	User     *User     `gorm:"foreignKey:UserId"`
+	Question *Question `gorm:"foreignKey:QuestionId"`
 }
 
 type UserStats struct {
@@ -53,6 +65,8 @@ type UserStats struct {
 	SolvedCount int     `gorm:"default:0"`
 	SuccessRate float64 `gorm:"default:0.0"`
 	UpdatedAt   time.Time
+	// Relationships
+	User *User `gorm:"foreignKey:UserId"`
 }
 
 type TestCase struct {
@@ -62,6 +76,8 @@ type TestCase struct {
 	Output     string `gorm:"not null"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
+	// Relationships
+	Question *Question `gorm:"foreignKey:QuestionId"`
 }
 
 // Init initializes the database and runs the migrations
@@ -70,7 +86,8 @@ func Init() *gorm.DB {
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		conf.DbHost, conf.DbPort, conf.DbUser, conf.DbPassword, conf.DbName, conf.DbSSLMode)
 
-	DB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to the database:", err)
 	}
