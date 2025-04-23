@@ -33,6 +33,7 @@ type Question struct {
 	Statement   string `gorm:"not null"`
 	TimeLimit   int    `gorm:"not null"`        // milliseconds
 	MemoryLimit int    `gorm:"not null"`        // megabytes
+	Difficulty  string `gorm:"not null"`        // 'easy', 'medium', 'hard'
 	Status      string `gorm:"default:'draft'"` // 'draft' or 'published'
 	OwnerId     uint   `gorm:"not null"`        // creator of the question
 	CreatedAt   time.Time

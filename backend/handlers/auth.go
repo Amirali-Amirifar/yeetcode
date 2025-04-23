@@ -206,8 +206,8 @@ func LoginHandler(c *gin.Context) {
 }
 
 func LogoutHandler(c *gin.Context) {
-	c.SetCookie("session_token", "", -1, "/", "", true, true)
-	c.Redirect(http.StatusFound, "/login")
+	c.SetCookie("session_token", "", -1, "/", "", false, false)
+	c.Redirect(http.StatusFound, "/signup")
 }
 
 func loginUser(c *gin.Context) {

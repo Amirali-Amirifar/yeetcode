@@ -26,9 +26,39 @@
                     <option value="unsolved">Unsolved</option>
                     <option value="attempted">Attempted</option>
                 </select>
+                {{if .IsLoggedIn}}
+                <button onclick="showCreateProblemModal()" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none">
+                    Create Problem
+                </button>
+                {{end}}
             </div>
         </div>
 
+        <!-- My Drafts Section -->
+        {{if .IsLoggedIn}}
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-4">My Drafts</h2>
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Title</th>
+                            <th scope="col" class="px-6 py-3">Difficulty</th>
+                            <th scope="col" class="px-6 py-3">Created</th>
+                            <th scope="col" class="px-6 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="draftsTableBody">
+                        <!-- Drafts will be loaded here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {{end}}
+
+        <!-- All Problems Section -->
+        <div>
+            <h2 class="text-xl font-semibold mb-4">All Problems</h2>
         <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
             <table class="w-full text-sm text-left text-gray-500">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
@@ -39,52 +69,243 @@
                         <th scope="col" class="px-6 py-3">Acceptance</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr class="bg-white border-b hover:bg-gray-50">
-                        <td class="px-6 py-4">
-                            <svg class="w-5 h-5 text-green-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/>
-                            </svg>
-                        </td>
-                        <td class="px-6 py-4">
-                            <a href="/problems/1" class="font-medium text-blue-600 hover:underline">Two Sum</a>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Easy</span>
-                        </td>
-                        <td class="px-6 py-4">48.2%</td>
-                    </tr>
-                    <tr class="bg-white border-b hover:bg-gray-50">
+                    <tbody id="problemsTableBody">
+                        <!-- Problems will be loaded here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Problem Modal -->
+    <div id="problemModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modalTitle">Create New Problem</h3>
+                <form id="problemForm" class="mt-4 space-y-3">
+                    <input type="hidden" id="problemId">
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                        <input type="text" name="title" id="title" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700">Problem Statement</label>
+                        <textarea name="description" id="description" rows="3" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="timeLimit" class="block text-sm font-medium text-gray-700">Time Limit (seconds)</label>
+                            <input type="number" name="timeLimit" id="timeLimit" min="1" value="1" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label for="memoryLimit" class="block text-sm font-medium text-gray-700">Memory Limit (MB)</label>
+                            <input type="number" name="memoryLimit" id="memoryLimit" min="1" value="256" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="difficulty" class="block text-sm font-medium text-gray-700">Difficulty</label>
+                        <select name="difficulty" id="difficulty" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="testCases" class="block text-sm font-medium text-gray-700">Test Cases (JSON format)</label>
+                        <textarea name="testCases" id="testCases" rows="2" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                            placeholder='[{"input": "1 2", "output": "3"}]'></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-4">
+                        <button type="button" onclick="hideProblemModal()"
+                            class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">
+                            Cancel
+                        </button>
+                        <button type="submit" id="submitButton"
+                            class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md">
+                            Create Draft
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load problems when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProblems();
+            if (document.getElementById('draftsTableBody')) {
+                loadDrafts();
+            }
+        });
+
+        function loadProblems() {
+            fetch('/api/problems')
+                .then(response => response.json())
+                .then(problems => {
+                    const tbody = document.getElementById('problemsTableBody');
+                    tbody.innerHTML = ''; // Clear existing rows
+
+                    problems.forEach(problem => {
+                        const row = document.createElement('tr');
+                        row.className = 'bg-white border-b hover:bg-gray-50';
+                        
+                        // Status icon (placeholder for now)
+                        row.innerHTML = `
                         <td class="px-6 py-4">
                             <svg class="w-5 h-5 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 14-4-4m4 4 4-4"/>
                             </svg>
                         </td>
                         <td class="px-6 py-4">
-                            <a href="/problems/2" class="font-medium text-blue-600 hover:underline">Add Two Numbers</a>
+                                <a href="/problems/${problem.id}" class="font-medium text-blue-600 hover:underline">${problem.title}</a>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">Medium</span>
+                                <span class="text-xs font-medium px-2.5 py-0.5 rounded ${
+                                    problem.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
+                                    problem.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                }">${problem.difficulty || 'N/A'}</span>
                         </td>
-                        <td class="px-6 py-4">36.7%</td>
-                    </tr>
-                    <tr class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-6 py-4">${problem.acceptance || 'N/A'}</td>
+                        `;
+                        
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error loading problems:', error));
+        }
+
+        function loadDrafts() {
+            fetch('/api/problems?status=draft')
+                .then(response => response.json())
+                .then(problems => {
+                    const tbody = document.getElementById('draftsTableBody');
+                    tbody.innerHTML = ''; // Clear existing rows
+
+                    problems.forEach(problem => {
+                        const row = document.createElement('tr');
+                        row.className = 'bg-white border-b hover:bg-gray-50';
+                        
+                        row.innerHTML = `
                         <td class="px-6 py-4">
-                            <svg class="w-5 h-5 text-red-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6m0 12L6 6"/>
-                            </svg>
+                                <a href="/problems/${problem.id}" class="font-medium text-blue-600 hover:underline">${problem.title}</a>
                         </td>
                         <td class="px-6 py-4">
-                            <a href="/problems/3" class="font-medium text-blue-600 hover:underline">Longest Substring Without Repeating Characters</a>
+                                <span class="text-xs font-medium px-2.5 py-0.5 rounded ${
+                                    problem.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
+                                    problem.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                }">${problem.difficulty || 'N/A'}</span>
                         </td>
+                            <td class="px-6 py-4">${new Date(problem.createdAt).toLocaleDateString()}</td>
                         <td class="px-6 py-4">
-                            <span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">Hard</span>
+                                <button onclick="editProblem(${problem.id})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                                <button onclick="deleteProblem(${problem.id})" class="text-red-600 hover:text-red-900">Delete</button>
                         </td>
-                        <td class="px-6 py-4">24.5%</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+                        `;
+                        
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error loading drafts:', error));
+        }
+
+        function showCreateProblemModal() {
+            document.getElementById('modalTitle').textContent = 'Create New Problem';
+            document.getElementById('submitButton').textContent = 'Create Draft';
+            document.getElementById('problemId').value = '';
+            document.getElementById('problemForm').reset();
+            document.getElementById('problemModal').classList.remove('hidden');
+        }
+
+        function showEditProblemModal(problem) {
+            document.getElementById('modalTitle').textContent = 'Edit Problem';
+            document.getElementById('submitButton').textContent = 'Save Changes';
+            document.getElementById('problemId').value = problem.id;
+            document.getElementById('title').value = problem.title;
+            document.getElementById('description').value = problem.statement;
+            document.getElementById('timeLimit').value = problem.timeLimit;
+            document.getElementById('memoryLimit').value = problem.memoryLimit;
+            document.getElementById('difficulty').value = problem.difficulty;
+            document.getElementById('testCases').value = JSON.stringify(problem.testCases);
+            document.getElementById('problemModal').classList.remove('hidden');
+        }
+
+        function hideProblemModal() {
+            document.getElementById('problemModal').classList.add('hidden');
+        }
+
+        function editProblem(id) {
+            fetch(`/api/problems/${id}`)
+                .then(response => response.json())
+                .then(problem => {
+                    showEditProblemModal(problem);
+                })
+                .catch(error => console.error('Error fetching problem:', error));
+        }
+
+        function deleteProblem(id) {
+            if (confirm('Are you sure you want to delete this problem?')) {
+                fetch(`/api/problems/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        loadDrafts();
+                    } else {
+                        alert('Error deleting problem');
+                    }
+                })
+                .catch(error => console.error('Error deleting problem:', error));
+            }
+        }
+
+        document.getElementById('problemForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                timeLimit: parseInt(document.getElementById('timeLimit').value),
+                memoryLimit: parseInt(document.getElementById('memoryLimit').value),
+                difficulty: document.getElementById('difficulty').value,
+                testCases: JSON.parse(document.getElementById('testCases').value),
+                status: 'draft'
+            };
+
+            const problemId = document.getElementById('problemId').value;
+            const method = problemId ? 'PUT' : 'POST';
+            const url = problemId ? `/api/problems/${problemId}` : '/api/problems';
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    hideProblemModal();
+                    loadDrafts();
+                    loadProblems();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving problem');
+            });
+        });
+    </script>
 
 {{template "footer" .}}
