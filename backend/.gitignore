@@ -3,3 +3,6 @@ tmp
 /cmd/gin-bin
 /static/dist/
 package-lock.json
+
+yeetcode
+.env

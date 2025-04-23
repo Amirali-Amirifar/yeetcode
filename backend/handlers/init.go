@@ -20,13 +20,12 @@ func InitHandlers(router *gin.Engine) {
 func initTemplateHandlers(router *gin.Engine) {
 	router.GET("/", func(c *gin.Context) {
 		cookie, err := c.Cookie("session_token")
-		if err != nil || !isValidSession(cookie) {
-			c.Redirect(http.StatusFound, "/signup")
-			return
-		}
+		isLoggedIn := err == nil && isValidSession(cookie)
+
 		c.HTML(http.StatusOK, "home.gohtml", gin.H{
-			"title": "Home",
-			"page":  "home",
+			"title":      "Home",
+			"page":       "home",
+			"IsLoggedIn": isLoggedIn,
 		})
 	})
 
@@ -35,16 +34,18 @@ func initTemplateHandlers(router *gin.Engine) {
 		err := params.Get("err")
 
 		c.HTML(http.StatusOK, "login.gohtml", gin.H{
-			"title": "Login",
-			"page":  "Login",
-			"err":   err,
+			"title":        "Login",
+			"page":         "Login",
+			"err":          err,
+			"IsSignupPage": true,
 		})
 	})
 
 	router.GET("/signup", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "signup.gohtml", gin.H{
-			"title": "Signup",
-			"page":  "Signup",
+			"title":        "Signup",
+			"page":         "Signup",
+			"IsSignupPage": true,
 		})
 	})
 
@@ -77,6 +78,12 @@ func initUnauthorizedHandlers(router *gin.Engine) {
 	router.POST("/api/login", LoginHandler)
 	router.POST("/api/signup", SignUpHandler)
 	router.POST("/api/logout", LogoutHandler)
-	router.POST("/api/problems", func(c *gin.Context) {})
-	router.POST("/api/problems/:problem", func(c *gin.Context) {})
+	router.GET("/api/logout", LogoutHandler)
+
+	// Problem routes
+	router.POST("/api/problems", CreateProblem)
+	router.GET("/api/problems", ListProblems)
+	router.GET("/api/problems/:id", GetProblem)
+	router.PUT("/api/problems/:id", UpdateProblem)
+	router.DELETE("/api/problems/:id", DeleteProblem)
 }

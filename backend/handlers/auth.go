@@ -192,13 +192,22 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("session_token", token, 24*3600, "/", "", true, true)
+	// Set cookie with proper settings
+	c.SetCookie(
+		"session_token", // name
+		token,           // value
+		24*3600,         // max age in seconds (24 hours)
+		"/",             // path
+		"",              // domain
+		true,            // secure
+		true,            // httpOnly
+	)
 	c.Redirect(http.StatusFound, "/")
 }
 
 func LogoutHandler(c *gin.Context) {
-	c.SetCookie("session_token", "", -1, "/", "", true, true)
-	c.Redirect(http.StatusFound, "/login")
+	c.SetCookie("session_token", "", -1, "/", "", false, false)
+	c.Redirect(http.StatusFound, "/signup")
 }
 
 func loginUser(c *gin.Context) {
