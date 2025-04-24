@@ -71,7 +71,7 @@
 </div>
 
 <script>
-// Tab switching
+// Tab switching functionality
 function showTab(tabName) {
     document.querySelectorAll('.tab-button').forEach(button => {
         button.classList.remove('active');
@@ -83,38 +83,80 @@ function showTab(tabName) {
     document.getElementById(`${tabName}-tab`).classList.remove('hidden');
 }
 
-// Load users
+// Load users data
 async function loadUsers() {
     try {
         const response = await fetch('/api/admin/users');
         if (!response.ok) throw new Error('Failed to load users');
         const users = await response.json();
         
+        // Get the current user's ID
+        const currentUserResponse = await fetch('/api/auth/current-user');
+        const currentUser = await currentUserResponse.json();
+        const currentUserId = currentUser.id || currentUser.Id;
+        
         const tbody = document.getElementById('users-table-body');
         tbody.innerHTML = '';
         
-        users.forEach(user => {
+        if (!users || users.length === 0) {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.id}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.username}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.role}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <button onclick="toggleUserRole(${user.id}, '${user.role}')" 
-                            class="px-3 py-1 rounded-md ${user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
-                        ${user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No users found</td>
+            `;
+            tbody.appendChild(row);
+            return;
+        }
+        
+        users.forEach(user => {
+            const userId = user.id || user.Id;
+            const username = user.username || user.Username;
+            const userRole = user.role || user.Role;
+            
+            // Check if this is the current user
+            const isCurrentUser = userId === currentUserId;
+            
+            const row = document.createElement('tr');
+            row.className = isCurrentUser ? 'bg-indigo-50' : '';
+            
+            let actionButtonHTML = '';
+            if (isCurrentUser && userRole === 'admin') {
+                // Current admin user cannot remove their own admin privileges
+                actionButtonHTML = `<button disabled class="px-3 py-1 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed">Cannot Remove Self</button>`;
+            } else {
+                actionButtonHTML = `
+                    <button onclick="toggleUserRole(${userId}, '${userRole || 'user'}')" 
+                            class="px-3 py-1 rounded-md ${userRole === 'admin' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+                        ${userRole === 'admin' ? 'Remove Admin' : 'Make Admin'}
                     </button>
+                `;
+            }
+            
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${userId}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${username || 'N/A'} ${isCurrentUser ? '<span class="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">You</span>' : ''}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${userRole || 'user'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${actionButtonHTML}
                 </td>
             `;
             tbody.appendChild(row);
         });
     } catch (error) {
         console.error('Error loading users:', error);
-        alert('Failed to load users');
+        const tbody = document.getElementById('users-table-body');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-red-500 text-center">
+                    Error loading users: ${error.message}
+                </td>
+            </tr>
+        `;
     }
 }
 
-// Load drafts
+// Load draft problems
 async function loadDrafts() {
     try {
         const response = await fetch('/api/problems?status=draft');
@@ -124,14 +166,33 @@ async function loadDrafts() {
         const tbody = document.getElementById('drafts-table-body');
         tbody.innerHTML = '';
         
-        drafts.forEach(draft => {
+        if (!drafts || drafts.length === 0) {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${draft.id}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${draft.title}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${draft.owner.username}</td>
+                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No draft problems found</td>
+            `;
+            tbody.appendChild(row);
+            return;
+        }
+        
+        drafts.forEach(draft => {
+            const draftId = draft.id || draft.Id;
+            const draftTitle = draft.title || draft.Title;
+            
+            let ownerName = 'Unknown';
+            if (draft.owner) {
+                ownerName = draft.owner.username || draft.owner.Username || 'Unknown';
+            } else if (draft.Owner) {
+                ownerName = draft.Owner.username || draft.Owner.Username || 'Unknown';
+            }
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${draftId}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${draftTitle || 'Untitled'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${ownerName}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <button onclick="publishProblem(${draft.id})" 
+                    <button onclick="publishProblem(${draftId})" 
                             class="px-3 py-1 bg-green-100 text-green-800 rounded-md">
                         Publish
                     </button>
@@ -141,11 +202,18 @@ async function loadDrafts() {
         });
     } catch (error) {
         console.error('Error loading drafts:', error);
-        alert('Failed to load drafts');
+        const tbody = document.getElementById('drafts-table-body');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-red-500 text-center">
+                    Error loading drafts: ${error.message}
+                </td>
+            </tr>
+        `;
     }
 }
 
-// Toggle user role
+// Toggle user role between admin and user
 async function toggleUserRole(userId, currentRole) {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
     try {
@@ -157,16 +225,19 @@ async function toggleUserRole(userId, currentRole) {
             body: JSON.stringify({ role: newRole })
         });
         
-        if (!response.ok) throw new Error('Failed to update user role');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to update user role');
+        }
         
         loadUsers(); // Reload users after update
     } catch (error) {
         console.error('Error updating user role:', error);
-        alert('Failed to update user role');
+        alert(`Failed to update user role: ${error.message}`);
     }
 }
 
-// Publish problem
+// Publish draft problem
 async function publishProblem(problemId) {
     try {
         const response = await fetch(`/api/problems/${problemId}/publish`, {
@@ -186,7 +257,7 @@ async function publishProblem(problemId) {
     }
 }
 
-// Load initial data
+// Load initial data when page loads
 document.addEventListener('DOMContentLoaded', () => {
     loadUsers();
     loadDrafts();

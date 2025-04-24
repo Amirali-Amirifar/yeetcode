@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// isLoggedInMiddleware checks if a user is logged in and sets the appropriate context variable
 func isLoggedInMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if _, ok := c.Get("isLoggedIn"); !ok {
@@ -18,6 +19,7 @@ func isLoggedInMiddleware() gin.HandlerFunc {
 	}
 }
 
+// authorizationMiddleware redirects to login if user is not logged in
 func authorizationMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Println(c.Request.URL.String())

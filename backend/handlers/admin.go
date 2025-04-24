@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -8,10 +9,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// UpdateUserRoleRequest defines the request format for updating a user's role
 type UpdateUserRoleRequest struct {
 	Role string `json:"role" binding:"required,oneof=admin user"`
 }
 
+// ListUsers returns a list of all users in the system (admin access only)
 func ListUsers(c *gin.Context) {
 	var users []db.User
 	if err := db.DB.Find(&users).Error; err != nil {
@@ -20,7 +23,7 @@ func ListUsers(c *gin.Context) {
 		return
 	}
 
-	// Remove sensitive information
+	// Remove sensitive information before sending response
 	for i := range users {
 		users[i].Password = ""
 	}
@@ -28,8 +31,15 @@ func ListUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
+// UpdateUserRole changes a user's role between 'admin' and 'user' (admin access only)
 func UpdateUserRole(c *gin.Context) {
-	userId := c.Param("id")
+	currentUserId, _, err := CheckValidToken(c.Request)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	targetUserId := c.Param("id")
 	var req UpdateUserRoleRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -37,8 +47,22 @@ func UpdateUserRole(c *gin.Context) {
 		return
 	}
 
+	// Convert targetUserId to uint for comparison
+	var targetUserIdUint uint
+	_, err = fmt.Sscanf(targetUserId, "%d", &targetUserIdUint)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		return
+	}
+
+	// Prevent admins from removing their own admin privileges
+	if currentUserId == targetUserIdUint && req.Role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Cannot remove your own admin privileges"})
+		return
+	}
+
 	var user db.User
-	if err := db.DB.First(&user, userId).Error; err != nil {
+	if err := db.DB.First(&user, targetUserId).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}

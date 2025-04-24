@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// InitHandlers initializes all route handlers for the application
 func InitHandlers(router *gin.Engine) {
 	router.Use(gin.Logger())
 	if gin.Mode() == gin.ReleaseMode {
@@ -26,6 +27,7 @@ func InitHandlers(router *gin.Engine) {
 	initAuthorizedHandlers(router)
 }
 
+// initAuthorizedTemplates sets up routes for authorized pages
 func initAuthorizedTemplates(router *gin.Engine) {
 	router.GET("/problems/:problem", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "problem.gohtml", gin.H{
@@ -35,7 +37,7 @@ func initAuthorizedTemplates(router *gin.Engine) {
 		})
 	})
 
-	// Add admin dashboard route
+	// Admin dashboard route
 	router.GET("/admin", func(c *gin.Context) {
 		_, role, err := CheckValidToken(c.Request)
 		if err != nil {
@@ -57,11 +59,13 @@ func initAuthorizedTemplates(router *gin.Engine) {
 	})
 }
 
+// isLoggedIn checks if the current request has a valid session
 func isLoggedIn(c *gin.Context) bool {
 	cookie, err := c.Cookie("session_token")
 	return err == nil && isValidSession(cookie)
 }
 
+// initUnauthorizedTemplates sets up routes for pages that don't require authentication
 func initUnauthorizedTemplates(router *gin.Engine) {
 	renderLogin := func(c *gin.Context) {
 		params := c.Request.URL.Query()
@@ -78,6 +82,7 @@ func initUnauthorizedTemplates(router *gin.Engine) {
 			"IsSignupPage": false,
 		})
 	}
+
 	renderSignUp := func(c *gin.Context) {
 		params := c.Request.URL.Query()
 		val := params.Get("err")
@@ -103,10 +108,12 @@ func initUnauthorizedTemplates(router *gin.Engine) {
 			"UserRole":   role,
 		})
 	})
+
 	router.GET("/login", renderLogin)
 	router.POST("/login", renderLogin)
 	router.GET("/signup", renderSignUp)
 	router.POST("/signup", renderSignUp)
+
 	router.GET("/problems", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "problems.gohtml", gin.H{
 			"title":      "Problems",
@@ -114,9 +121,11 @@ func initUnauthorizedTemplates(router *gin.Engine) {
 			"IsLoggedIn": isLoggedIn(c),
 		})
 	})
+
 	router.GET("/problems/new", ShowCreateProblemPage)
 }
 
+// isValidSession validates the given session token
 func isValidSession(cookie string) bool {
 	_, _, err := jwt.ParseToken(cookie)
 	return err == nil
@@ -127,14 +136,16 @@ type LoginRequest struct {
 	Password string `form:"password" binding:"required"`
 }
 
+// initAuthHandlers sets up authentication-related API routes
 func initAuthHandlers(router *gin.Engine) {
-	// Authentication routes
 	router.POST("/api/login", LoginHandler)
 	router.POST("/api/signup", SignUpHandler)
 	router.POST("/api/logout", LogoutHandler)
 	router.GET("/api/logout", LogoutHandler)
+	router.GET("/api/auth/current-user", GetCurrentUser)
 }
 
+// initAuthorizedHandlers sets up API routes that require authentication
 func initAuthorizedHandlers(router *gin.Engine) {
 	// Problem routes with role-based permissions
 	problemRoutes := router.Group("/api/problems")

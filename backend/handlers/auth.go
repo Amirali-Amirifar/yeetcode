@@ -222,3 +222,23 @@ func comparePasswords(hashedPassword, plainPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 	return err == nil
 }
+
+// GetCurrentUser returns information about the currently logged-in user
+func GetCurrentUser(c *gin.Context) {
+	userId, _, err := CheckValidToken(c.Request)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var user db.User
+	if err := db.DB.First(&user, userId).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Remove sensitive information before sending
+	user.Password = ""
+
+	c.JSON(http.StatusOK, user)
+}

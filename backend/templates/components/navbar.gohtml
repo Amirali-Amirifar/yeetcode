@@ -17,12 +17,7 @@
                 </button>
             </div>
             <div class="hidden lg:flex lg:gap-x-12">
-                <a href="/problems" class="text-sm font-semibold leading-6 text-gray-900">Problems</a>
-                {{if .IsLoggedIn}}
-                    {{if eq .UserRole "admin"}}
-                        <a href="/admin" class="text-sm font-semibold leading-6 text-gray-900">Admin Dashboard</a>
-                    {{end}}
-                {{end}}
+                <!-- Navigation links can be added here if needed -->
             </div>
             <div class="hidden lg:flex lg:flex-1 lg:justify-end">
                 {{if .IsLoggedIn}}
