@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"html/template"
+	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/Amirali-Amirifar/yeetcode/backend/utils/jwt"
 	"github.com/gin-gonic/gin"
@@ -13,55 +16,83 @@ func InitHandlers(router *gin.Engine) {
 		router.Use(gin.Recovery())
 	}
 
-	initTemplateHandlers(router)
+	router.SetFuncMap(template.FuncMap{})
+	router.Use(isLoggedInMiddleware())
+
+	initUnauthorizedTemplates(router)
 	initUnauthorizedHandlers(router)
+	router.Use(authorizationMiddleware())
+	initAuthorizedTemplates(router)
+
 }
 
-func initTemplateHandlers(router *gin.Engine) {
-	router.GET("/", func(c *gin.Context) {
-		cookie, err := c.Cookie("session_token")
-		isLoggedIn := err == nil && isValidSession(cookie)
+func initAuthorizedTemplates(router *gin.Engine) {
 
-		c.HTML(http.StatusOK, "home.gohtml", gin.H{
-			"title":      "Home",
-			"page":       "home",
-			"IsLoggedIn": isLoggedIn,
+	router.GET("/problems/:problem", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "problem.gohtml", gin.H{
+			"title":      "Problem",
+			"page":       "Problem",
+			"IsLoggedIn": isLoggedIn(c),
 		})
 	})
+}
 
-	router.GET("/login", func(c *gin.Context) {
+func isLoggedIn(c *gin.Context) bool {
+	cookie, err := c.Cookie("session_token")
+	return err == nil && isValidSession(cookie)
+}
+
+func initUnauthorizedTemplates(router *gin.Engine) {
+	renderLogin := func(c *gin.Context) {
 		params := c.Request.URL.Query()
-		err := params.Get("err")
-
+		val := params.Get("err")
+		unscaped, err := url.QueryUnescape(val)
+		if err != nil {
+			log.Fatalf("Error while unescaping login form: %v", err)
+		}
 		c.HTML(http.StatusOK, "login.gohtml", gin.H{
 			"title":        "Login",
 			"page":         "Login",
-			"err":          err,
-			"IsSignupPage": true,
+			"err":          unscaped,
+			"IsLoggedIn":   isLoggedIn(c),
+			"IsSignupPage": false,
 		})
-	})
-
-	router.GET("/signup", func(c *gin.Context) {
+	}
+	renderSignUp := func(c *gin.Context) {
+		params := c.Request.URL.Query()
+		val := params.Get("err")
+		unscaped, err := url.QueryUnescape(val)
+		if err != nil {
+			log.Fatalf("Error while unescaping login form: %v", err)
+		}
 		c.HTML(http.StatusOK, "signup.gohtml", gin.H{
 			"title":        "Signup",
 			"page":         "Signup",
 			"IsSignupPage": true,
+			"err":          unscaped,
+			"IsLoggedIn":   isLoggedIn(c),
+		})
+	}
+
+	router.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "home.gohtml", gin.H{
+			"title":      "Home",
+			"page":       "home",
+			"IsLoggedIn": isLoggedIn(c),
 		})
 	})
-
+	router.GET("/login", renderLogin)
+	router.POST("/login", renderLogin)
+	router.GET("/signup", renderSignUp)
+	router.POST("/signup", renderSignUp)
 	router.GET("/problems", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "problems.gohtml", gin.H{
-			"title": "Problems",
-			"page":  "Problems",
+			"title":      "Problems",
+			"page":       "Problems",
+			"IsLoggedIn": isLoggedIn(c),
 		})
 	})
 
-	router.GET("/problems/:problem", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "problem.gohtml", gin.H{
-			"title": "Problem",
-			"page":  "Problem",
-		})
-	})
 }
 
 func isValidSession(cookie string) bool {
