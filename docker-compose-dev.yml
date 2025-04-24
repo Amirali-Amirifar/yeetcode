@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: yeetcode-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: yeetcode
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - yeetcode-network
+    restart: unless-stopped
+
+networks:
+  yeetcode-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
