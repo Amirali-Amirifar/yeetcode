@@ -2,9 +2,9 @@
 
 <div class="container mx-auto p-4 max-w-7xl">
     <!-- Search and Filters -->
-    <div class="mb-6 flex flex-col md:flex-row gap-4 items-center">
+    <form method="GET" action="/problems" class="mb-6 flex flex-col md:flex-row gap-4 items-center">
         <div class="flex-1 relative">
-            <input type="search" id="search" class="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" placeholder="Search problems...">
+            <input type="search" id="search" name="search" value="{{ .SearchTerm }}" class="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" placeholder="Search problems...">
             <div class="absolute left-3 top-3.5 w-5 h-5 text-gray-400">
                 <svg style="width: 20px !important; height: 20px !important;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -12,20 +12,17 @@
             </div>
         </div>
         <div class="flex gap-3">
-            <select id="difficultyFilter" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+            <select id="difficulty" name="difficulty" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
                 <option value="">All Difficulties</option>
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
+                <option value="easy" {{ if eq .Difficulty "easy" }}selected{{ end }}>Easy</option>
+                <option value="medium" {{ if eq .Difficulty "medium" }}selected{{ end }}>Medium</option>
+                <option value="hard" {{ if eq .Difficulty "hard" }}selected{{ end }}>Hard</option>
             </select>
-            <select id="statusFilter" class="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
-                <option value="">All Statuses</option>
-                <option value="Solved">Solved</option>
-                <option value="Attempted">Attempted</option>
-                <option value="Unsolved">Unsolved</option>
-            </select>
+            <button type="submit" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200">
+                Apply Filters
+            </button>
             {{if .IsLoggedIn}}
-            <a href="/problems/new" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2">
+            <a href="/problems/new" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2">
                 <div class="w-5 h-5">
                     <svg style="width: 20px !important; height: 20px !important;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -35,12 +32,15 @@
             </a>
             {{end}}
         </div>
-    </div>
+    </form>
 
     <!-- All Problems Section -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
         <div class="p-4 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-800">All Problems</h2>
+            {{ if gt .TotalCount 0 }}
+                <p class="text-sm text-gray-600 mt-1">Showing {{ len .Problems }} of {{ .TotalCount }} problems</p>
+            {{ end }}
         </div>
         <div class="overflow-x-auto">
             <table class="w-full">
@@ -52,159 +52,59 @@
                         <th class="p-4 text-left text-sm font-medium text-gray-500">Acceptance</th>
                     </tr>
                 </thead>
-                <tbody id="problemsTableBody" class="divide-y divide-gray-200">
-                    <!-- Problems will be loaded here by JavaScript -->
-                    <tr id="loadingRow">
-                        <td colspan="4" class="p-8 text-center text-gray-500">
-                            Loading problems...
-                        </td>
-                    </tr>
+                <tbody class="divide-y divide-gray-200">
+                    {{ if .ErrorMessage }}
+                        <tr>
+                            <td colspan="4" class="p-8 text-center text-red-500">{{ .ErrorMessage }}</td>
+                        </tr>
+                    {{ else if eq (len .Problems) 0 }}
+                        <tr>
+                            <td colspan="4" class="p-8 text-center text-gray-500">No problems found matching your criteria.</td>
+                        </tr>
+                    {{ else }}
+                        {{ range .Problems }}
+                            <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                <td class="p-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        {{ .Status }}
+                                    </span>
+                                </td>
+                                <td class="p-4">
+                                    <a href="/problems/{{ .ID }}" class="text-blue-600 hover:text-blue-800 hover:underline">
+                                        {{ .Title }}
+                                    </a>
+                                </td>
+                                <td class="p-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                        {{ if eq .Difficulty "Easy" }}bg-green-100 text-green-800
+                                        {{ else if eq .Difficulty "Medium" }}bg-yellow-100 text-yellow-800
+                                        {{ else }}bg-red-100 text-red-800{{ end }}">
+                                        {{ .Difficulty }}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-gray-600">N/A</td>
+                            </tr>
+                        {{ end }}
+                    {{ end }}
                 </tbody>
             </table>
         </div>
+        
         <!-- Pagination Controls -->
-        <div class="p-4 border-t border-gray-200 flex justify-between items-center">
-            <button id="prevPage" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50" disabled>Previous</button>
-            <span id="pageInfo" class="text-sm text-gray-600">Page 1 of 1</span>
-            <button id="nextPage" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50" disabled>Next</button>
-        </div>
+        {{ if gt .TotalPages 1 }}
+            <div class="p-4 border-t border-gray-200 flex justify-between items-center">
+                <a href="{{ if .HasPrevPage }}/problems?page={{ .PrevPage }}{{ if .SearchTerm }}&search={{ .SearchTerm }}{{ end }}{{ if .Difficulty }}&difficulty={{ .Difficulty }}{{ end }}{{ else }}#{{ end }}" 
+                   class="px-4 py-2 {{ if .HasPrevPage }}bg-blue-600 text-white{{ else }}bg-gray-200 text-gray-500 cursor-not-allowed{{ end }} rounded-lg hover:{{ if .HasPrevPage }}bg-blue-700{{ else }}bg-gray-200{{ end }}">
+                    Previous
+                </a>
+                <span class="text-sm text-gray-600">Page {{ .CurrentPage }} of {{ .TotalPages }}</span>
+                <a href="{{ if .HasNextPage }}/problems?page={{ .NextPage }}{{ if .SearchTerm }}&search={{ .SearchTerm }}{{ end }}{{ if .Difficulty }}&difficulty={{ .Difficulty }}{{ end }}{{ else }}#{{ end }}"
+                   class="px-4 py-2 {{ if .HasNextPage }}bg-blue-600 text-white{{ else }}bg-gray-200 text-gray-500 cursor-not-allowed{{ end }} rounded-lg hover:{{ if .HasNextPage }}bg-blue-700{{ else }}bg-gray-200{{ end }}">
+                    Next
+                </a>
+            </div>
+        {{ end }}
     </div>
 </div>
-
-
-<script>
-    let currentPage = 1;
-    const problemsPerPage = 10; // Or load from config
-    let allProblems = [];
-    let filteredProblems = [];
-
-    function setLoading(isLoading) {
-        const loadingRow = document.getElementById('loadingRow');
-        const tableBody = document.getElementById('problemsTableBody');
-        if (isLoading) {
-            tableBody.innerHTML = ''; // Clear previous content
-            tableBody.appendChild(loadingRow); 
-            loadingRow.style.display = '';
-        } else {
-            if (loadingRow) loadingRow.style.display = 'none';
-        }
-         // Also disable filters/search/pagination during load?
-        const controls = document.querySelectorAll('#search, #difficultyFilter, #statusFilter, #prevPage, #nextPage, a.bg-blue-600');
-        controls.forEach(el => el.disabled = isLoading);
-    }
-
-    function renderProblems(page) {
-        const tbody = document.getElementById('problemsTableBody');
-        tbody.innerHTML = ''; // Clear previous rows
-        setLoading(true);
-
-        const start = (page - 1) * problemsPerPage;
-        const end = start + problemsPerPage;
-        const paginatedProblems = filteredProblems.slice(start, end);
-
-        if (paginatedProblems.length === 0 && filteredProblems.length > 0) {
-             tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500">No problems match the current filters on this page.</td></tr>';
-        } else if (filteredProblems.length === 0) {
-             tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500">No problems found matching your criteria.</td></tr>';
-        } else {
-             tbody.innerHTML = paginatedProblems.map(problem => `
-                <tr class="hover:bg-gray-50 transition-colors duration-150">
-                    <td class="p-4">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            problem.status === 'Solved' ? 'bg-green-100 text-green-800' :
-                            problem.status === 'Attempted' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
-                        }">
-                            ${problem.status || 'Unsolved'}
-                        </span>
-                    </td>
-                    <td class="p-4">
-                        <a href="/problems/${problem.id}" class="text-blue-600 hover:text-blue-800 hover:underline">
-                            ${problem.title}
-                        </a>
-                    </td>
-                    <td class="p-4">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            problem.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
-                            problem.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                        }">
-                            ${problem.difficulty}
-                        </span>
-                    </td>
-                    <td class="p-4 text-gray-600">${problem.acceptance || 'N/A'}</td>
-                </tr>
-            `).join('');
-        }
-        setLoading(false);
-        updatePaginationControls();
-    }
-
-    function updatePaginationControls() {
-        const totalPages = Math.ceil(filteredProblems.length / problemsPerPage);
-        const pageInfo = document.getElementById('pageInfo');
-        const prevButton = document.getElementById('prevPage');
-        const nextButton = document.getElementById('nextPage');
-
-        pageInfo.textContent = `Page ${currentPage} of ${totalPages > 0 ? totalPages : 1}`;
-        prevButton.disabled = currentPage <= 1;
-        nextButton.disabled = currentPage >= totalPages;
-    }
-
-    function applyFiltersAndSearch() {
-        const searchTerm = document.getElementById('search').value.toLowerCase();
-        const difficulty = document.getElementById('difficultyFilter').value;
-        const status = document.getElementById('statusFilter').value;
-
-        filteredProblems = allProblems.filter(problem => {
-            const matchesSearch = !searchTerm || problem.title.toLowerCase().includes(searchTerm);
-            const matchesDifficulty = !difficulty || problem.difficulty === difficulty;
-            const matchesStatus = !status || (problem.status || 'Unsolved') === status; 
-            return matchesSearch && matchesDifficulty && matchesStatus;
-        });
-
-        currentPage = 1; // Reset to first page after filtering
-        renderProblems(currentPage);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        setLoading(true);
-        // Initial fetch for all problems
-        fetch('/api/problems') // Fetch published problems by default? Adapt API if needed
-            .then(response => response.json())
-            .then(problems => {
-                allProblems = problems; // Store all problems
-                applyFiltersAndSearch(); // Apply initial filters (none) and render
-            })
-            .catch(error => {
-                console.error('Error fetching problems:', error);
-                document.getElementById('problemsTableBody').innerHTML = '<tr><td colspan="4" class="p-8 text-center text-red-500">Failed to load problems.</td></tr>';
-                setLoading(false); 
-            });
-
-        // Add event listeners for filters and search
-        document.getElementById('search').addEventListener('input', applyFiltersAndSearch);
-        document.getElementById('difficultyFilter').addEventListener('change', applyFiltersAndSearch);
-        document.getElementById('statusFilter').addEventListener('change', applyFiltersAndSearch);
-
-        // Add event listeners for pagination
-        document.getElementById('prevPage').addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                renderProblems(currentPage);
-            }
-        });
-        document.getElementById('nextPage').addEventListener('click', () => {
-             const totalPages = Math.ceil(filteredProblems.length / problemsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderProblems(currentPage);
-            }
-        });
-    });
-
-    // No delete function needed here anymore
-
-</script>
 
 {{template "footer" .}}

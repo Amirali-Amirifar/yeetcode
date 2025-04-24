@@ -1,0 +1,89 @@
+{{ template "header" . }}
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="mb-6 border-b pb-4">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">Submission Details</h1>
+                    <div class="flex items-center space-x-4">
+                        <a href="/problems/{{.Submission.QuestionId}}" class="text-indigo-600 hover:text-indigo-900">
+                            Back to Problem
+                        </a>
+                        <a href="/problems/{{.Submission.QuestionId}}/submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                            Submit Again
+                        </a>
+                    </div>
+                </div>
+                <div class="mt-2 flex items-center">
+                    <span class="text-sm text-gray-500">Problem:</span>
+                    <a href="/problems/{{.Submission.QuestionId}}" class="ml-2 text-sm font-medium text-indigo-600 hover:underline">
+                        {{.Submission.Question.Title}}
+                    </a>
+                </div>
+                <div class="mt-1 flex items-center">
+                    <span class="text-sm text-gray-500">Submitted:</span>
+                    <span class="ml-2 text-sm text-gray-700">{{.Submission.CreatedAt.Format "Jan 02, 2006 15:04:05"}}</span>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <div class="flex items-center">
+                    <span class="text-sm font-medium text-gray-500">Status:</span>
+                    <span class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium 
+                        {{if eq .Submission.Status "ok"}}bg-green-100 text-green-800
+                        {{else if eq .Submission.Status "pending"}}bg-yellow-100 text-yellow-800
+                        {{else if eq .Submission.Status "compile_error"}}bg-red-100 text-red-800
+                        {{else if eq .Submission.Status "wrong_answer"}}bg-red-100 text-red-800
+                        {{else if eq .Submission.Status "memory_limit"}}bg-red-100 text-red-800
+                        {{else if eq .Submission.Status "time_limit"}}bg-red-100 text-red-800
+                        {{else if eq .Submission.Status "runtime_error"}}bg-red-100 text-red-800
+                        {{else}}bg-gray-100 text-gray-800{{end}}">
+                        {{if eq .Submission.Status "ok"}}OK
+                        {{else if eq .Submission.Status "pending"}}Pending
+                        {{else if eq .Submission.Status "compile_error"}}Compile Error
+                        {{else if eq .Submission.Status "wrong_answer"}}Wrong Answer
+                        {{else if eq .Submission.Status "memory_limit"}}Memory Limit Exceeded
+                        {{else if eq .Submission.Status "time_limit"}}Time Limit Exceeded
+                        {{else if eq .Submission.Status "runtime_error"}}Runtime Error
+                        {{else}}{{.Submission.Status}}{{end}}
+                    </span>
+                </div>
+                
+                {{if .Submission.ProcessedAt}}
+                <div class="mt-1 flex items-center">
+                    <span class="text-sm font-medium text-gray-500">Processed:</span>
+                    <span class="ml-2 text-sm text-gray-700">{{.Submission.ProcessedAt.Format "Jan 02, 2006 15:04:05"}}</span>
+                </div>
+                {{end}}
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-3">Your Code</h2>
+                <div class="bg-gray-50 rounded-md p-4 overflow-auto">
+                    <pre class="text-sm text-gray-800"><code>{{.Submission.Code}}</code></pre>
+                </div>
+            </div>
+
+            {{if and (ne .Submission.Status "pending") (ne .Submission.Output "")}}
+            <div class="mb-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-3">Output</h2>
+                <div class="bg-gray-50 rounded-md p-4 overflow-auto">
+                    <pre class="text-sm text-gray-800"><code>{{.Submission.Output}}</code></pre>
+                </div>
+            </div>
+            {{end}}
+
+            {{if and (ne .Submission.Status "pending") (ne .Submission.Error "")}}
+            <div>
+                <h2 class="text-lg font-medium text-gray-900 mb-3">Error</h2>
+                <div class="bg-red-50 rounded-md p-4 overflow-auto">
+                    <pre class="text-sm text-red-800"><code>{{.Submission.Error}}</code></pre>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+
+{{ template "footer" . }} 

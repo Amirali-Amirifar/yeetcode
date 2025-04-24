@@ -21,7 +21,9 @@
             </div>
             <div class="hidden lg:flex lg:flex-1 lg:justify-end">
                 {{if .IsLoggedIn}}
-                    <a href="/api/logout" class="text-sm font-semibold leading-6 text-gray-900">Log out</a>
+                    <form method="POST" action="/api/logout">
+                        <button type="submit" class="text-sm font-semibold leading-6 text-gray-900">Log out</button>
+                    </form>
                 {{else}}
                     <a href="/login" class="text-sm font-semibold leading-6 text-gray-900">Log in <span aria-hidden="true">&rarr;</span></a>
                 {{end}}

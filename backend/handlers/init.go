@@ -5,8 +5,14 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 
+	"math"
+
+	"github.com/Amirali-Amirifar/yeetcode/backend/db"
 	"github.com/Amirali-Amirifar/yeetcode/backend/utils/jwt"
+	"github.com/Amirali-Amirifar/yeetcode/backend/utils/roles"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,34 +35,56 @@ func InitHandlers(router *gin.Engine) {
 
 // initAuthorizedTemplates sets up routes for authorized pages
 func initAuthorizedTemplates(router *gin.Engine) {
-	router.GET("/problems/:problem", func(c *gin.Context) {
+	router.GET("/problems/:id", func(c *gin.Context) {
+		problemId := c.Param("id")
+
+		// Fetch the problem data
+		var problem db.Question
+		if err := db.DB.Preload("Owner").Preload("TestCases").First(&problem, problemId).Error; err != nil {
+			// If problem not found, redirect to problems list
+			c.Redirect(http.StatusFound, "/problems")
+			return
+		}
+
+		// Get user info for permissions
+		userId, role, _ := CheckValidToken(c.Request)
+
+		// Only show published problems to non-owners and non-admins
+		if problem.Status != "published" && problem.OwnerId != userId && role != "admin" {
+			c.Redirect(http.StatusFound, "/problems")
+			return
+		}
+
+		// Remove sensitive owner information
+		if problem.Owner != nil {
+			problem.Owner.Password = ""
+		}
+
+		// Fetch recent submissions for this problem
+		var submissions []db.Submission
+		if err := db.DB.Preload("User").Where("question_id = ?", problem.Id).Order("created_at DESC").Limit(10).Find(&submissions).Error; err != nil {
+			log.Printf("Error fetching submissions: %v", err)
+			submissions = []db.Submission{}
+		}
+
 		c.HTML(http.StatusOK, "problem.gohtml", gin.H{
-			"title":      "Problem",
-			"page":       "Problem",
-			"IsLoggedIn": isLoggedIn(c),
+			"title":       problem.Title,
+			"page":        "Problem",
+			"IsLoggedIn":  isLoggedIn(c),
+			"UserRole":    role,
+			"Problem":     problem,
+			"Submissions": submissions,
 		})
 	})
 
 	// Admin dashboard route
-	router.GET("/admin", func(c *gin.Context) {
-		_, role, err := CheckValidToken(c.Request)
-		if err != nil {
-			c.Redirect(http.StatusFound, "/login")
-			return
-		}
+	router.GET("/admin", ShowAdminDashboard)
 
-		if role != "admin" {
-			c.Redirect(http.StatusFound, "/")
-			return
-		}
+	// User role management route
+	router.POST("/admin/users/:id/toggle-role", HandleToggleUserRole)
 
-		c.HTML(http.StatusOK, "admin.gohtml", gin.H{
-			"title":      "Admin Dashboard",
-			"page":       "Admin",
-			"IsLoggedIn": true,
-			"UserRole":   role,
-		})
-	})
+	// Publish draft problem route
+	router.POST("/admin/drafts/:id/publish", HandlePublishDraft)
 }
 
 // isLoggedIn checks if the current request has a valid session
@@ -115,14 +143,113 @@ func initUnauthorizedTemplates(router *gin.Engine) {
 	router.POST("/signup", renderSignUp)
 
 	router.GET("/problems", func(c *gin.Context) {
+		// Extract query parameters
+		difficulty := c.DefaultQuery("difficulty", "")
+		searchTerm := c.DefaultQuery("search", "")
+		page := 1
+		if pageStr := c.Query("page"); pageStr != "" {
+			if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+				page = p
+			}
+		}
+
+		// Get user role for permissions
+		_, role, _ := CheckValidToken(c.Request)
+
+		// Build database query
+		query := db.DB.Preload("Owner")
+
+		// Always show only published problems to non-admins
+		if !roles.HasPermission(role, "view_all_problems") {
+			query = query.Where("status = ?", "published")
+		}
+
+		// Filter by difficulty if provided
+		if difficulty != "" {
+			query = query.Where("LOWER(difficulty) = LOWER(?)", difficulty)
+		}
+
+		// Filter by search term if provided
+		if searchTerm != "" {
+			query = query.Where("title ILIKE ? OR statement ILIKE ?", "%"+searchTerm+"%", "%"+searchTerm+"%")
+		}
+
+		// Count total problems for pagination
+		var totalCount int64
+		query.Model(&db.Question{}).Count(&totalCount)
+
+		// Calculate pagination
+		const problemsPerPage = 10
+		totalPages := int(math.Ceil(float64(totalCount) / float64(problemsPerPage)))
+		if page > totalPages && totalPages > 0 {
+			page = totalPages
+		}
+		offset := (page - 1) * problemsPerPage
+
+		// Get paginated problems
+		var problems []db.Question
+		query = query.Order("published_at DESC").Offset(offset).Limit(problemsPerPage)
+		if err := query.Find(&problems).Error; err != nil {
+			log.Printf("Error fetching problems: %v", err)
+			c.HTML(http.StatusOK, "problems.gohtml", gin.H{
+				"title":        "Problems",
+				"page":         "Problems",
+				"IsLoggedIn":   isLoggedIn(c),
+				"UserRole":     role,
+				"ErrorMessage": "Failed to fetch problems",
+			})
+			return
+		}
+
+		// Format problems for display
+		var formattedProblems []gin.H
+		for _, problem := range problems {
+			// Format the difficulty with first letter capitalized
+			difficulty := problem.Difficulty
+			if len(difficulty) > 0 {
+				difficulty = strings.ToUpper(difficulty[:1]) + difficulty[1:]
+			}
+
+			// Add each problem
+			formattedProblems = append(formattedProblems, gin.H{
+				"ID":         problem.Id,
+				"Title":      problem.Title,
+				"Difficulty": difficulty,
+				"Status":     "Unsolved", // Default status
+			})
+		}
+
 		c.HTML(http.StatusOK, "problems.gohtml", gin.H{
-			"title":      "Problems",
-			"page":       "Problems",
-			"IsLoggedIn": isLoggedIn(c),
+			"title":       "Problems",
+			"page":        "Problems",
+			"IsLoggedIn":  isLoggedIn(c),
+			"UserRole":    role,
+			"Problems":    formattedProblems,
+			"SearchTerm":  searchTerm,
+			"Difficulty":  difficulty,
+			"CurrentPage": page,
+			"TotalPages":  totalPages,
+			"TotalCount":  totalCount,
+			"HasPrevPage": page > 1,
+			"HasNextPage": page < totalPages,
+			"PrevPage":    page - 1,
+			"NextPage":    page + 1,
 		})
 	})
 
 	router.GET("/problems/new", ShowCreateProblemPage)
+
+	// Add route for deleting problems via form submission
+	router.POST("/problems/:id/delete", HandleDeleteProblem)
+
+	// Add route for creating problems via form submission
+	router.POST("/problems/create", HandleCreateProblem)
+
+	// Add routes for submissions
+	router.GET("/problems/:id/submit", ShowSubmitProblemPage)
+	router.POST("/problems/:id/submit", HandleSubmitSolution)
+	router.GET("/submissions", ShowUserSubmissionsPage)
+	router.GET("/submissions/:id", ShowSubmissionPage)
 }
 
 // isValidSession validates the given session token

@@ -12,9 +12,19 @@ import (
 // isLoggedInMiddleware checks if a user is logged in and sets the appropriate context variable
 func isLoggedInMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if _, ok := c.Get("isLoggedIn"); !ok {
-			c.Set("IsLoggedIn", isLoggedIn(c))
+		// Check if user is logged in
+		isLoggedIn := isLoggedIn(c)
+		c.Set("IsLoggedIn", isLoggedIn)
+
+		// Set user information in context if logged in
+		if isLoggedIn {
+			userId, role, err := CheckValidToken(c.Request)
+			if err == nil {
+				c.Set("userId", userId)
+				c.Set("userRole", role)
+			}
 		}
+
 		c.Next()
 	}
 }
@@ -36,13 +46,21 @@ func RequireRole(requiredRole string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userId, role, err := CheckValidToken(c.Request)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			// Return HTTP 401 Unauthorized for missing or invalid tokens
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error":   "Unauthorized",
+				"details": "Valid authentication is required",
+			})
 			c.Abort()
 			return
 		}
 
 		if role != requiredRole {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+			// Return HTTP 403 Forbidden when the user doesn't have the required role
+			c.JSON(http.StatusForbidden, gin.H{
+				"error":   "Forbidden",
+				"details": "You don't have permission to access this resource",
+			})
 			c.Abort()
 			return
 		}
@@ -58,13 +76,21 @@ func RequirePermission(permission string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userId, role, err := CheckValidToken(c.Request)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			// Return HTTP 401 Unauthorized for missing or invalid tokens
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error":   "Unauthorized",
+				"details": "Valid authentication is required",
+			})
 			c.Abort()
 			return
 		}
 
 		if !roles.HasPermission(role, permission) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+			// Return HTTP 403 Forbidden when the user doesn't have the required permission
+			c.JSON(http.StatusForbidden, gin.H{
+				"error":   "Forbidden",
+				"details": "You don't have permission to perform this action",
+			})
 			c.Abort()
 			return
 		}

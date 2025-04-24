@@ -1,276 +1,125 @@
 {{ template "header" . }}
 
-<div class="min-h-screen bg-gray-50 py-8">
+<div class="min-h-screen bg-gray-50 py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Admin Dashboard Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p class="mt-2 text-sm text-gray-600">Manage users and problems</p>
-        </div>
+        <div class="bg-white shadow-sm rounded-lg">
+            <!-- Header Section -->
+            <div class="px-4 py-5 border-b border-gray-200 sm:px-6">
+                <h1 class="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+                <p class="mt-1 text-sm text-gray-500">Manage users and problem drafts.</p>
+            </div>
 
-        <!-- Tabs -->
-        <div class="border-b border-gray-200">
-            <nav class="-mb-px flex space-x-8">
-                <button onclick="showTab('users')" class="tab-button active">
-                    Users
-                </button>
-                <button onclick="showTab('drafts')" class="tab-button">
-                    Draft Problems
-                </button>
-            </nav>
-        </div>
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px">
+                    <a href="/admin?tab=users" class="w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm {{ if eq .ActiveTab "users" }}border-indigo-500 text-indigo-600{{ else }}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{{ end }}">
+                        Users
+                    </a>
+                    <a href="/admin?tab=drafts" class="w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm {{ if eq .ActiveTab "drafts" }}border-indigo-500 text-indigo-600{{ else }}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{{ end }}">
+                        Draft Problems
+                    </a>
+                </nav>
+            </div>
 
-        <!-- Users Tab -->
-        <div id="users-tab" class="mt-8">
-            <div class="bg-white shadow rounded-lg">
-                <div class="px-4 py-5 sm:p-6">
-                    <h2 class="text-lg font-medium text-gray-900 mb-4">User Management</h2>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200" id="users-table-body">
-                                <!-- Users will be loaded here -->
-                            </tbody>
-                        </table>
+            <!-- Users Tab -->
+            <div id="users-tab" class="mt-8 px-4 sm:px-6 pb-6" {{ if ne .ActiveTab "users" }}style="display: none;"{{ end }}>
+                <div class="flex flex-col">
+                    <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                        <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                            <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        {{ if .Users }}
+                                            {{ range .Users }}
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .Id }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .Username }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .Role }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                        <form action="/admin/users/{{ .Id }}/toggle-role" method="POST">
+                                                            <button type="submit" class="text-indigo-600 hover:text-indigo-900 {{ if eq .Role "admin" }}bg-red-100 hover:bg-red-200{{ else }}bg-green-100 hover:bg-green-200{{ end }} px-3 py-1 rounded">
+                                                                {{ if eq .Role "admin" }}
+                                                                    Demote to User
+                                                                {{ else }}
+                                                                    Promote to Admin
+                                                                {{ end }}
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            {{ end }}
+                                        {{ else }}
+                                            <tr>
+                                                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No users found</td>
+                                            </tr>
+                                        {{ end }}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Drafts Tab -->
-        <div id="drafts-tab" class="mt-8 hidden">
-            <div class="bg-white shadow rounded-lg">
-                <div class="px-4 py-5 sm:p-6">
-                    <h2 class="text-lg font-medium text-gray-900 mb-4">Draft Problems</h2>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200" id="drafts-table-body">
-                                <!-- Drafts will be loaded here -->
-                            </tbody>
-                        </table>
+            <!-- Drafts Tab -->
+            <div id="drafts-tab" class="mt-8 px-4 sm:px-6 pb-6" {{ if ne .ActiveTab "drafts" }}style="display: none;"{{ end }}>
+                <div class="flex flex-col">
+                    <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                        <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                            <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        {{ if .Drafts }}
+                                            {{ range .Drafts }}
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .Id }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .Title }}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        {{ if .Owner }}
+                                                            {{ .Owner.Username }}
+                                                        {{ else }}
+                                                            Unknown
+                                                        {{ end }}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                        <form action="/admin/drafts/{{ .Id }}/publish" method="POST">
+                                                            <button type="submit" class="text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded">
+                                                                Publish
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            {{ end }}
+                                        {{ else }}
+                                            <tr>
+                                                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No draft problems found</td>
+                                            </tr>
+                                        {{ end }}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-// Tab switching functionality
-function showTab(tabName) {
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.classList.remove('active');
-    });
-    document.querySelector(`button[onclick="showTab('${tabName}')"]`).classList.add('active');
-
-    document.getElementById('users-tab').classList.add('hidden');
-    document.getElementById('drafts-tab').classList.add('hidden');
-    document.getElementById(`${tabName}-tab`).classList.remove('hidden');
-}
-
-// Load users data
-async function loadUsers() {
-    try {
-        const response = await fetch('/api/admin/users');
-        if (!response.ok) throw new Error('Failed to load users');
-        const users = await response.json();
-        
-        // Get the current user's ID
-        const currentUserResponse = await fetch('/api/auth/current-user');
-        const currentUser = await currentUserResponse.json();
-        const currentUserId = currentUser.id || currentUser.Id;
-        
-        const tbody = document.getElementById('users-table-body');
-        tbody.innerHTML = '';
-        
-        if (!users || users.length === 0) {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No users found</td>
-            `;
-            tbody.appendChild(row);
-            return;
-        }
-        
-        users.forEach(user => {
-            const userId = user.id || user.Id;
-            const username = user.username || user.Username;
-            const userRole = user.role || user.Role;
-            
-            // Check if this is the current user
-            const isCurrentUser = userId === currentUserId;
-            
-            const row = document.createElement('tr');
-            row.className = isCurrentUser ? 'bg-indigo-50' : '';
-            
-            let actionButtonHTML = '';
-            if (isCurrentUser && userRole === 'admin') {
-                // Current admin user cannot remove their own admin privileges
-                actionButtonHTML = `<button disabled class="px-3 py-1 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed">Cannot Remove Self</button>`;
-            } else {
-                actionButtonHTML = `
-                    <button onclick="toggleUserRole(${userId}, '${userRole || 'user'}')" 
-                            class="px-3 py-1 rounded-md ${userRole === 'admin' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
-                        ${userRole === 'admin' ? 'Remove Admin' : 'Make Admin'}
-                    </button>
-                `;
-            }
-            
-            row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${userId}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ${username || 'N/A'} ${isCurrentUser ? '<span class="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">You</span>' : ''}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${userRole || 'user'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ${actionButtonHTML}
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-    } catch (error) {
-        console.error('Error loading users:', error);
-        const tbody = document.getElementById('users-table-body');
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-red-500 text-center">
-                    Error loading users: ${error.message}
-                </td>
-            </tr>
-        `;
-    }
-}
-
-// Load draft problems
-async function loadDrafts() {
-    try {
-        const response = await fetch('/api/problems?status=draft');
-        if (!response.ok) throw new Error('Failed to load drafts');
-        const drafts = await response.json();
-        
-        const tbody = document.getElementById('drafts-table-body');
-        tbody.innerHTML = '';
-        
-        if (!drafts || drafts.length === 0) {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No draft problems found</td>
-            `;
-            tbody.appendChild(row);
-            return;
-        }
-        
-        drafts.forEach(draft => {
-            const draftId = draft.id || draft.Id;
-            const draftTitle = draft.title || draft.Title;
-            
-            let ownerName = 'Unknown';
-            if (draft.owner) {
-                ownerName = draft.owner.username || draft.owner.Username || 'Unknown';
-            } else if (draft.Owner) {
-                ownerName = draft.Owner.username || draft.Owner.Username || 'Unknown';
-            }
-            
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${draftId}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${draftTitle || 'Untitled'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${ownerName}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <button onclick="publishProblem(${draftId})" 
-                            class="px-3 py-1 bg-green-100 text-green-800 rounded-md">
-                        Publish
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-    } catch (error) {
-        console.error('Error loading drafts:', error);
-        const tbody = document.getElementById('drafts-table-body');
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-red-500 text-center">
-                    Error loading drafts: ${error.message}
-                </td>
-            </tr>
-        `;
-    }
-}
-
-// Toggle user role between admin and user
-async function toggleUserRole(userId, currentRole) {
-    const newRole = currentRole === 'admin' ? 'user' : 'admin';
-    try {
-        const response = await fetch(`/api/admin/users/${userId}/role`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ role: newRole })
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to update user role');
-        }
-        
-        loadUsers(); // Reload users after update
-    } catch (error) {
-        console.error('Error updating user role:', error);
-        alert(`Failed to update user role: ${error.message}`);
-    }
-}
-
-// Publish draft problem
-async function publishProblem(problemId) {
-    try {
-        const response = await fetch(`/api/problems/${problemId}/publish`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ status: 'published' })
-        });
-        
-        if (!response.ok) throw new Error('Failed to publish problem');
-        
-        loadDrafts(); // Reload drafts after publishing
-    } catch (error) {
-        console.error('Error publishing problem:', error);
-        alert('Failed to publish problem');
-    }
-}
-
-// Load initial data when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    loadUsers();
-    loadDrafts();
-});
-</script>
-
-<style>
-.tab-button {
-    @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm;
-}
-.tab-button.active {
-    @apply border-indigo-500 text-indigo-600;
-}
-</style>
 
 {{ template "footer" . }} 

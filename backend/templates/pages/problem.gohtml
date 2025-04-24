@@ -8,14 +8,17 @@
                 {{if .IsLoggedIn}}
                     {{if eq .UserRole "admin"}}
                         <div class="flex space-x-4">
-                            <button onclick="publishProblem('{{.Problem.Id}}')" 
-                                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                                {{if eq .Problem.Status "published"}}
-                                    Unpublish
-                                {{else}}
-                                    Publish
-                                {{end}}
-                            </button>
+                            <form action="/problems/{{.Problem.Id}}/publish" method="POST">
+                                <input type="hidden" name="status" value="{{if eq .Problem.Status "published"}}draft{{else}}published{{end}}">
+                                <button type="submit"
+                                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                                    {{if eq .Problem.Status "published"}}
+                                        Unpublish
+                                    {{else}}
+                                        Publish
+                                    {{end}}
+                                </button>
+                            </form>
                         </div>
                     {{end}}
                 {{end}}
@@ -44,35 +47,65 @@
                     {{end}}
                 </div>
             </div>
+
+            {{if .IsLoggedIn}}
+            <div class="mt-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Submit Solution</h2>
+                <form action="/problems/{{.Problem.Id}}/submit" method="POST" class="space-y-4">
+                    <div>
+                        <label for="code" class="block text-sm font-medium text-gray-700">Your Code</label>
+                        <textarea id="code" name="code" rows="10" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-mono" required></textarea>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {{end}}
+
+            <div class="mt-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Recent Submissions</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Language</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {{range .Submissions}}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{.User.Username}}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{.Language}}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        {{if eq .Status "accepted"}}bg-green-100 text-green-800
+                                        {{else if eq .Status "wrong_answer"}}bg-red-100 text-red-800
+                                        {{else if eq .Status "compile_error"}}bg-yellow-100 text-yellow-800
+                                        {{else}}bg-gray-100 text-gray-800{{end}}">
+                                        {{.Status}}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{.CreatedAt.Format "Jan 02, 2006 15:04:05"}}
+                                </td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
-<script>
-function publishProblem(problemId) {
-    const status = document.querySelector('button').textContent.trim() === 'Publish' ? 'published' : 'draft';
-    
-    fetch(`/api/problems/${problemId}/publish`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: status })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        window.location.reload();
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to update problem status');
-    });
-}
-</script>
 
 {{ template "footer" . }} 

@@ -33,7 +33,9 @@
                             <div class="flex gap-3">
                                 <!-- Link to edit page (needs implementation) -->
                                 <a href="/problems/{{.Id}}/edit" class="text-blue-600 hover:text-blue-800 hover:underline">Edit</a> 
-                                <button onclick="deleteProblem({{.Id}})" class="text-red-600 hover:text-red-800 hover:underline">Delete</button>
+                                <form action="/problems/{{.Id}}/delete" method="POST" class="inline">
+                                    <button type="submit" onclick="return confirm('Are you sure you want to delete this draft?')" class="text-red-600 hover:text-red-800 hover:underline">Delete</button>
+                                </form>
                             </div>
                         </td>
                     </tr>
@@ -49,7 +51,13 @@
             <h2 class="text-2xl font-semibold text-gray-800">Create a New Problem</h2>
         </div>
         
-        <form id="problemForm" action="/api/problems" method="POST" class="space-y-5">
+        {{if .Error}}
+        <div class="mb-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-md">
+            {{.Error}}
+        </div>
+        {{end}}
+
+        <form id="problemForm" action="/problems/create" method="POST" class="space-y-5">
             <input type="hidden" id="problemId" name="problemId"> <!-- Keep hidden field for potential edits in future -->
             <div>
                 <label for="title" class="block mb-1.5 text-sm font-medium text-gray-700">Title</label>
@@ -94,26 +102,5 @@
         </form>
     </div>
 </div>
-
-<script>
-    // Basic delete function example (adapt as needed)
-    function deleteProblem(id) {
-        if (confirm('Are you sure you want to delete this draft?')) {
-            fetch(`/api/problems/${id}`, { method: 'DELETE' })
-                .then(response => {
-                    if (response.ok) {
-                        // Reload page to show updated draft list
-                        location.reload(); 
-                    } else {
-                        alert('Failed to delete draft.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting draft:', error);
-                    alert('Error deleting draft.');
-                });
-        }
-    }
-</script>
 
 {{ template "footer" .}} 

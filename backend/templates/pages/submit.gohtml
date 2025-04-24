@@ -1,0 +1,139 @@
+{{ template "header" . }}
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-xl font-semibold text-gray-900">Submit Solution</h1>
+                    <a href="/problems/{{.Problem.Id}}" class="text-indigo-600 hover:text-indigo-900">
+                        Back to Problem
+                    </a>
+                </div>
+                <div class="mt-1">
+                    <h2 class="text-lg font-medium text-gray-900">{{.Problem.Title}}</h2>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                        {{if eq .Problem.Difficulty "easy"}}bg-green-100 text-green-800
+                        {{else if eq .Problem.Difficulty "medium"}}bg-yellow-100 text-yellow-800
+                        {{else}}bg-red-100 text-red-800{{end}}">
+                        {{.Problem.Difficulty}}
+                    </span>
+                </div>
+            </div>
+
+            {{if .Error}}
+            <div class="px-6 py-4 bg-red-50 border-b border-red-200 text-red-700">
+                {{.Error}}
+            </div>
+            {{end}}
+
+            <div class="p-6">
+                <form action="/problems/{{.Problem.Id}}/submit" method="POST" class="space-y-6">
+                    <div>
+                        <label for="code" class="block text-sm font-medium text-gray-700">Your Go Code</label>
+                        <div class="mt-1">
+                            <textarea id="code" name="code" rows="20" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md font-mono" required>package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	// Your solution here
+}
+</textarea>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">
+                            Write your solution in Go. Remember to handle the input and output formats as specified in the problem.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Sample Test Case</h3>
+                        <div class="bg-gray-50 p-4 rounded-md">
+                            {{if .Problem.TestCases}}
+                                {{with index .Problem.TestCases 0}}
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500">Input</h4>
+                                        <pre class="mt-1 text-sm text-gray-900 overflow-auto">{{.Input}}</pre>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-medium text-gray-500">Expected Output</h4>
+                                        <pre class="mt-1 text-sm text-gray-900 overflow-auto">{{.Output}}</pre>
+                                    </div>
+                                </div>
+                                {{end}}
+                            {{else}}
+                                <p class="text-sm text-gray-500">No sample test cases available.</p>
+                            {{end}}
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Submit Solution
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {{if .Submissions}}
+            <div class="px-6 py-4 border-t border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Your Recent Submissions</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted At</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {{range .Submissions}}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{.Id}}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{.CreatedAt.Format "Jan 02, 2006 15:04:05"}}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        {{if eq .Status "ok"}}bg-green-100 text-green-800
+                                        {{else if eq .Status "pending"}}bg-yellow-100 text-yellow-800
+                                        {{else if eq .Status "compile_error"}}bg-red-100 text-red-800
+                                        {{else if eq .Status "wrong_answer"}}bg-red-100 text-red-800
+                                        {{else if eq .Status "memory_limit"}}bg-red-100 text-red-800
+                                        {{else if eq .Status "time_limit"}}bg-red-100 text-red-800
+                                        {{else if eq .Status "runtime_error"}}bg-red-100 text-red-800
+                                        {{else}}bg-gray-100 text-gray-800{{end}}">
+                                        {{if eq .Status "ok"}}OK
+                                        {{else if eq .Status "pending"}}Pending
+                                        {{else if eq .Status "compile_error"}}Compile Error
+                                        {{else if eq .Status "wrong_answer"}}Wrong Answer
+                                        {{else if eq .Status "memory_limit"}}Memory Limit Exceeded
+                                        {{else if eq .Status "time_limit"}}Time Limit Exceeded
+                                        {{else if eq .Status "runtime_error"}}Runtime Error
+                                        {{else}}{{.Status}}{{end}}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <a href="/submissions/{{.Id}}" class="text-indigo-600 hover:text-indigo-900">
+                                        View Details
+                                    </a>
+                                </td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+
+{{ template "footer" . }} 

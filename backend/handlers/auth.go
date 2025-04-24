@@ -149,20 +149,29 @@ func LoginHandler(c *gin.Context) {
 	username := c.PostForm("email")
 	password := c.PostForm("password")
 
+	// Check if credentials were provided
+	if username == "" || password == "" {
+		c.Redirect(http.StatusFound, "/login?err="+url.QueryEscape("Email and password are required"))
+		return
+	}
+
 	var user db.User
 	if err := db.DB.Where("username = ?", username).First(&user).Error; err != nil {
-		c.Redirect(http.StatusFound, "/login?err=wrong-credentials")
+		// Don't reveal specific errors for security reasons
+		c.Redirect(http.StatusFound, "/login?err="+url.QueryEscape("Invalid credentials"))
 		return
 	}
 
 	if !ComparePasswords(user.Password, password) {
-		c.Redirect(http.StatusFound, "/login?err=wrong-credentials")
+		// Don't reveal specific errors for security reasons
+		c.Redirect(http.StatusFound, "/login?err="+url.QueryEscape("Invalid credentials"))
 		return
 	}
 
 	token, err := jwt.GenerateSecureToken(user.Id, user.Role)
 	if err != nil {
-		c.Redirect(http.StatusFound, "/login?err=token-error")
+		log.Printf("Error generating JWT token: %v", err)
+		c.Redirect(http.StatusFound, "/login?err="+url.QueryEscape("Error creating session"))
 		return
 	}
 
@@ -180,8 +189,17 @@ func LoginHandler(c *gin.Context) {
 }
 
 func LogoutHandler(c *gin.Context) {
+	// Clear the cookie by setting expiration to past
 	c.SetCookie("session_token", "", -1, "/", "", false, false)
-	c.Redirect(http.StatusFound, "/signup")
+
+	// Return a success response for API calls
+	if strings.HasPrefix(c.Request.URL.Path, "/api/") {
+		c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+		return
+	}
+
+	// Otherwise redirect to home page
+	c.Redirect(http.StatusFound, "/")
 }
 
 func loginUser(c *gin.Context) {
