@@ -92,6 +92,7 @@ func initUnauthorizedTemplates(router *gin.Engine) {
 			"IsLoggedIn": isLoggedIn(c),
 		})
 	})
+	router.GET("/problems/new", ShowCreateProblemPage)
 
 }
 
