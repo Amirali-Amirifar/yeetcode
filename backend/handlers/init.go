@@ -3,9 +3,28 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/Amirali-Amirifar/yeetcode/backend/db" // Need db for db.User
 	"github.com/Amirali-Amirifar/yeetcode/backend/utils/jwt"
 	"github.com/gin-gonic/gin"
 )
+
+// Placeholder middleware to ensure user context is checked
+// Adapt DB lookup logic as needed
+func CheckAuthStatusMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cookie, err := c.Cookie("session_token")
+		if err == nil {
+			userId, _, parseErr := jwt.ParseToken(cookie) // Assuming jwt.ParseToken exists
+			if parseErr == nil && userId != 0 {
+				// Token is valid, set a minimal user in context
+				// In a real app, you'd fetch full user details from DB here
+				user := db.User{Id: userId}
+				c.Set("user", user) // Set user in context
+			}
+		}
+		c.Next() // Continue to the next handler (ShowCreateProblemPage)
+	}
+}
 
 func InitHandlers(router *gin.Engine) {
 	router.Use(gin.Logger())
@@ -50,17 +69,20 @@ func initTemplateHandlers(router *gin.Engine) {
 	})
 
 	router.GET("/problems", func(c *gin.Context) {
+		cookie, err := c.Cookie("session_token")
+		isLoggedIn := err == nil && isValidSession(cookie)
 		c.HTML(http.StatusOK, "problems.gohtml", gin.H{
-			"title": "Problems",
-			"page":  "Problems",
+			"title":        "Problems",
+			"page":         "Problems",
+			"IsLoggedIn":   isLoggedIn,
+			"IsSignupPage": false,
 		})
 	})
 
+	router.GET("/problems/new", CheckAuthStatusMiddleware(), ShowCreateProblemPage)
+
 	router.GET("/problems/:problem", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "problem.gohtml", gin.H{
-			"title": "Problem",
-			"page":  "Problem",
-		})
+		c.Redirect(http.StatusFound, "/problems")
 	})
 }
 

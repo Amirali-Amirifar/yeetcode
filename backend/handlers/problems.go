@@ -223,3 +223,31 @@ func DeleteProblem(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Question deleted successfully"})
 }
+
+// ShowCreateProblemPage renders the page for creating a new problem.
+func ShowCreateProblemPage(c *gin.Context) {
+	isLoggedIn := false
+	userId := uint(0)
+	var drafts []db.Question
+
+	userInterface, exists := c.Get("user")
+	if exists {
+		u, ok := userInterface.(db.User)
+		if ok && u.Id != 0 {
+			isLoggedIn = true
+			userId = u.Id
+			if err := db.DB.Where("owner_id = ? AND status = ?", userId, "draft").Order("created_at desc").Find(&drafts).Error; err != nil {
+				log.Printf("Error fetching user drafts: %v", err)
+			}
+		}
+	}
+
+	data := gin.H{
+		"Title":        "Create New Problem",
+		"IsLoggedIn":   isLoggedIn,
+		"IsSignupPage": false,
+		"Drafts":       drafts,
+	}
+
+	c.HTML(http.StatusOK, "create_problem.gohtml", data)
+}
