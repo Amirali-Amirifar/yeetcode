@@ -5,9 +5,9 @@
             <div class="w-full max-w-md mx-auto px-6 py-4 text-center font-semibold bg-red-500 text-white rounded-lg shadow-lg mb-8">
                 <div class="flex items-center justify-center mb-3">
                     <span class="text-xl mr-2">⚠️</span>
-                    <h2 class="text-lg">Invalid Email or Password</h2>
+                    <h2 class="text-lg">Something is wrong</h2>
                 </div>
-                <p class="text-sm">Please check your credentials and try again.</p>
+                <p class="text-sm">{{.err}}</p>
             </div>
         {{ end }}
         <div class="bg-white p-8 rounded-lg shadow-md w-full  max-w-lg">
