@@ -1,0 +1,205 @@
+{{ template "header" . }}
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Admin Dashboard Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p class="mt-2 text-sm text-gray-600">Manage users and problems</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8">
+                <button onclick="showTab('users')" class="tab-button active">
+                    Users
+                </button>
+                <button onclick="showTab('drafts')" class="tab-button">
+                    Draft Problems
+                </button>
+            </nav>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="users-tab" class="mt-8">
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">User Management</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="users-table-body">
+                                <!-- Users will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drafts Tab -->
+        <div id="drafts-tab" class="mt-8 hidden">
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Draft Problems</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="drafts-table-body">
+                                <!-- Drafts will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tab switching
+function showTab(tabName) {
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    document.querySelector(`button[onclick="showTab('${tabName}')"]`).classList.add('active');
+
+    document.getElementById('users-tab').classList.add('hidden');
+    document.getElementById('drafts-tab').classList.add('hidden');
+    document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+}
+
+// Load users
+async function loadUsers() {
+    try {
+        const response = await fetch('/api/admin/users');
+        if (!response.ok) throw new Error('Failed to load users');
+        const users = await response.json();
+        
+        const tbody = document.getElementById('users-table-body');
+        tbody.innerHTML = '';
+        
+        users.forEach(user => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.id}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.username}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.role}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <button onclick="toggleUserRole(${user.id}, '${user.role}')" 
+                            class="px-3 py-1 rounded-md ${user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+                        ${user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error loading users:', error);
+        alert('Failed to load users');
+    }
+}
+
+// Load drafts
+async function loadDrafts() {
+    try {
+        const response = await fetch('/api/problems?status=draft');
+        if (!response.ok) throw new Error('Failed to load drafts');
+        const drafts = await response.json();
+        
+        const tbody = document.getElementById('drafts-table-body');
+        tbody.innerHTML = '';
+        
+        drafts.forEach(draft => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${draft.id}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${draft.title}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${draft.owner.username}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <button onclick="publishProblem(${draft.id})" 
+                            class="px-3 py-1 bg-green-100 text-green-800 rounded-md">
+                        Publish
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error loading drafts:', error);
+        alert('Failed to load drafts');
+    }
+}
+
+// Toggle user role
+async function toggleUserRole(userId, currentRole) {
+    const newRole = currentRole === 'admin' ? 'user' : 'admin';
+    try {
+        const response = await fetch(`/api/admin/users/${userId}/role`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ role: newRole })
+        });
+        
+        if (!response.ok) throw new Error('Failed to update user role');
+        
+        loadUsers(); // Reload users after update
+    } catch (error) {
+        console.error('Error updating user role:', error);
+        alert('Failed to update user role');
+    }
+}
+
+// Publish problem
+async function publishProblem(problemId) {
+    try {
+        const response = await fetch(`/api/problems/${problemId}/publish`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: 'published' })
+        });
+        
+        if (!response.ok) throw new Error('Failed to publish problem');
+        
+        loadDrafts(); // Reload drafts after publishing
+    } catch (error) {
+        console.error('Error publishing problem:', error);
+        alert('Failed to publish problem');
+    }
+}
+
+// Load initial data
+document.addEventListener('DOMContentLoaded', () => {
+    loadUsers();
+    loadDrafts();
+});
+</script>
+
+<style>
+.tab-button {
+    @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm;
+}
+.tab-button.active {
+    @apply border-indigo-500 text-indigo-600;
+}
+</style>
+
+{{ template "footer" . }} 

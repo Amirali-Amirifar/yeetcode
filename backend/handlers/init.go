@@ -20,19 +20,39 @@ func InitHandlers(router *gin.Engine) {
 	router.Use(isLoggedInMiddleware())
 
 	initUnauthorizedTemplates(router)
-	initUnauthorizedHandlers(router)
+	initAuthHandlers(router)
 	router.Use(authorizationMiddleware())
 	initAuthorizedTemplates(router)
-
+	initAuthorizedHandlers(router)
 }
 
 func initAuthorizedTemplates(router *gin.Engine) {
-
 	router.GET("/problems/:problem", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "problem.gohtml", gin.H{
 			"title":      "Problem",
 			"page":       "Problem",
 			"IsLoggedIn": isLoggedIn(c),
+		})
+	})
+
+	// Add admin dashboard route
+	router.GET("/admin", func(c *gin.Context) {
+		_, role, err := CheckValidToken(c.Request)
+		if err != nil {
+			c.Redirect(http.StatusFound, "/login")
+			return
+		}
+
+		if role != "admin" {
+			c.Redirect(http.StatusFound, "/")
+			return
+		}
+
+		c.HTML(http.StatusOK, "admin.gohtml", gin.H{
+			"title":      "Admin Dashboard",
+			"page":       "Admin",
+			"IsLoggedIn": true,
+			"UserRole":   role,
 		})
 	})
 }
@@ -75,10 +95,12 @@ func initUnauthorizedTemplates(router *gin.Engine) {
 	}
 
 	router.GET("/", func(c *gin.Context) {
+		_, role, _ := CheckValidToken(c.Request)
 		c.HTML(http.StatusOK, "home.gohtml", gin.H{
 			"title":      "Home",
 			"page":       "home",
 			"IsLoggedIn": isLoggedIn(c),
+			"UserRole":   role,
 		})
 	})
 	router.GET("/login", renderLogin)
@@ -93,7 +115,6 @@ func initUnauthorizedTemplates(router *gin.Engine) {
 		})
 	})
 	router.GET("/problems/new", ShowCreateProblemPage)
-
 }
 
 func isValidSession(cookie string) bool {
@@ -106,16 +127,41 @@ type LoginRequest struct {
 	Password string `form:"password" binding:"required"`
 }
 
-func initUnauthorizedHandlers(router *gin.Engine) {
+func initAuthHandlers(router *gin.Engine) {
+	// Authentication routes
 	router.POST("/api/login", LoginHandler)
 	router.POST("/api/signup", SignUpHandler)
 	router.POST("/api/logout", LogoutHandler)
 	router.GET("/api/logout", LogoutHandler)
+}
 
-	// Problem routes
-	router.POST("/api/problems", CreateProblem)
-	router.GET("/api/problems", ListProblems)
-	router.GET("/api/problems/:id", GetProblem)
-	router.PUT("/api/problems/:id", UpdateProblem)
-	router.DELETE("/api/problems/:id", DeleteProblem)
+func initAuthorizedHandlers(router *gin.Engine) {
+	// Problem routes with role-based permissions
+	problemRoutes := router.Group("/api/problems")
+	{
+		// All authenticated users can create problems
+		problemRoutes.POST("", CreateProblem)
+
+		// All authenticated users can view problems
+		problemRoutes.GET("", ListProblems)
+		problemRoutes.GET("/:id", GetProblem)
+
+		// Only users with edit permission can update problems
+		problemRoutes.PUT("/:id", RequirePermission("edit_problems"), UpdateProblem)
+
+		// Only users with delete permission can delete problems
+		problemRoutes.DELETE("/:id", RequirePermission("delete_problems"), DeleteProblem)
+
+		// Only admins can publish problems
+		problemRoutes.PUT("/:id/publish", RequirePermission("publish_problems"), PublishProblem)
+	}
+
+	// Admin routes
+	adminRoutes := router.Group("/api/admin")
+	{
+		// Only admins can access these routes
+		adminRoutes.Use(RequireRole("admin"))
+		adminRoutes.GET("/users", ListUsers)
+		adminRoutes.PUT("/users/:id/role", UpdateUserRole)
+	}
 }
