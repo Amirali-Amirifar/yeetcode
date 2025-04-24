@@ -3,8 +3,10 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/Amirali-Amirifar/yeetcode/backend/db"
+	"github.com/Amirali-Amirifar/yeetcode/backend/utils/roles"
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,6 +33,10 @@ type UpdateProblemRequest struct {
 	Input       string `json:"input"`
 	Output      string `json:"output"`
 	Status      string `json:"status"`
+}
+
+type PublishProblemRequest struct {
+	Status string `json:"status" binding:"required,oneof=draft published"`
 }
 
 func CreateProblem(c *gin.Context) {
@@ -171,12 +177,23 @@ func UpdateProblem(c *gin.Context) {
 }
 
 func ListProblems(c *gin.Context) {
+	_, role, err := CheckValidToken(c.Request)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	var questions []db.Question
 	query := db.DB.Preload("Owner").Preload("TestCases")
 
 	// Filter by status if provided
 	if status := c.Query("status"); status != "" {
 		query = query.Where("status = ?", status)
+	} else {
+		// If no status filter, show only published questions to non-admins
+		if !roles.HasPermission(role, "view_all_problems") {
+			query = query.Where("status = ?", "published")
+		}
 	}
 
 	// Filter by owner if provided
@@ -184,10 +201,24 @@ func ListProblems(c *gin.Context) {
 		query = query.Where("owner_id = ?", ownerId)
 	}
 
+	// Order by published date for published questions
+	if c.Query("status") == "published" || (!roles.HasPermission(role, "view_all_problems") && c.Query("status") == "") {
+		query = query.Order("published_at DESC")
+	} else {
+		query = query.Order("created_at DESC")
+	}
+
 	if err := query.Find(&questions).Error; err != nil {
 		log.Printf("Error listing questions: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list questions"})
 		return
+	}
+
+	// Remove sensitive information from response
+	for i := range questions {
+		if questions[i].Owner != nil {
+			questions[i].Owner.Password = ""
+		}
 	}
 
 	c.JSON(http.StatusOK, questions)
@@ -250,4 +281,68 @@ func ShowCreateProblemPage(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "create_problem.gohtml", data)
+}
+
+func PublishProblem(c *gin.Context) {
+	_, role, err := CheckValidToken(c.Request)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	if !roles.HasPermission(role, "publish_problems") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+		return
+	}
+
+	id := c.Param("id")
+	var req PublishProblemRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var question db.Question
+	if err := db.DB.First(&question, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Question not found"})
+		return
+	}
+
+	// Update status and published_at if being published
+	if req.Status == "published" {
+		// Check if the question has test cases before publishing
+		var testCaseCount int64
+		if err := db.DB.Model(&db.TestCase{}).Where("question_id = ?", question.Id).Count(&testCaseCount).Error; err != nil {
+			log.Printf("Error checking test cases: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check test cases"})
+			return
+		}
+
+		if testCaseCount == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot publish question without test cases"})
+			return
+		}
+
+		now := time.Now()
+		question.PublishedAt = &now
+	} else {
+		question.PublishedAt = nil
+	}
+	question.Status = req.Status
+
+	if err := db.DB.Save(&question).Error; err != nil {
+		log.Printf("Error updating question status: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update question status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Question status updated successfully",
+		"question": gin.H{
+			"id":          question.Id,
+			"title":       question.Title,
+			"status":      question.Status,
+			"publishedAt": question.PublishedAt,
+		},
+	})
 }

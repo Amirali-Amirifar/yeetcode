@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/Amirali-Amirifar/yeetcode/backend/config"
+	"github.com/Amirali-Amirifar/yeetcode/backend/utils/roles"
+	"golang.org/x/crypto/bcrypt"
 
 	_ "golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
@@ -81,6 +83,41 @@ type TestCase struct {
 	Question *Question `gorm:"foreignKey:QuestionId"`
 }
 
+// createInitialAdmin creates the initial admin user if it doesn't exist
+func createInitialAdmin() error {
+	var admin User
+	result := DB.Where("username = ?", "admin@admin.com").First(&admin)
+
+	if result.Error == nil {
+		// Admin already exists
+		return nil
+	}
+
+	if result.Error != gorm.ErrRecordNotFound {
+		return result.Error
+	}
+
+	// Hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("12345678"), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	// Create admin user
+	admin = User{
+		Username: "admin@admin.com",
+		Password: string(hashedPassword),
+		Role:     roles.RoleAdmin,
+	}
+
+	if err := DB.Create(&admin).Error; err != nil {
+		return err
+	}
+
+	log.Println("Initial admin user created successfully")
+	return nil
+}
+
 // Init initializes the database and runs the migrations
 func Init() *gorm.DB {
 	conf := config.GetConfig()
@@ -96,6 +133,11 @@ func Init() *gorm.DB {
 	err = DB.AutoMigrate(&User{}, &Question{}, &Submission{}, &UserStats{}, &TestCase{})
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
+	}
+
+	// Create initial admin user
+	if err := createInitialAdmin(); err != nil {
+		log.Fatal("Failed to create initial admin user:", err)
 	}
 
 	return DB

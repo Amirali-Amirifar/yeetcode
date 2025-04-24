@@ -1,0 +1,78 @@
+{{ template "header" . }}
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">{{.Problem.Title}}</h1>
+                {{if .IsLoggedIn}}
+                    {{if eq .UserRole "admin"}}
+                        <div class="flex space-x-4">
+                            <button onclick="publishProblem('{{.Problem.Id}}')" 
+                                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                                {{if eq .Problem.Status "published"}}
+                                    Unpublish
+                                {{else}}
+                                    Publish
+                                {{end}}
+                            </button>
+                        </div>
+                    {{end}}
+                {{end}}
+            </div>
+
+            <div class="prose max-w-none">
+                <p class="text-gray-600">{{.Problem.Statement}}</p>
+            </div>
+
+            <div class="mt-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Test Cases</h2>
+                <div class="space-y-4">
+                    {{range .Problem.TestCases}}
+                        <div class="bg-gray-50 p-4 rounded-md">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <h3 class="text-sm font-medium text-gray-500">Input</h3>
+                                    <pre class="mt-1 text-sm text-gray-900">{{.Input}}</pre>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-medium text-gray-500">Output</h3>
+                                    <pre class="mt-1 text-sm text-gray-900">{{.Output}}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function publishProblem(problemId) {
+    const status = document.querySelector('button').textContent.trim() === 'Publish' ? 'published' : 'draft';
+    
+    fetch(`/api/problems/${problemId}/publish`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: status })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        window.location.reload();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update problem status');
+    });
+}
+</script>
+
+{{ template "footer" . }} 
