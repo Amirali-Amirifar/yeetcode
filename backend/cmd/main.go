@@ -34,6 +34,7 @@ func main() {
 
 	handlers.InitHandlers(router)
 
-	router.Static("/static", "./static")
+	// Serve static files from the 'backend/static' directory relative to workspace root
+	router.Static("/static", "backend/static")
 	router.Run(fmt.Sprintf(":%s", config.GetConfig().ServerPort))
 }
