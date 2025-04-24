@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -52,49 +53,38 @@ func SignUpHandler(c *gin.Context) {
 	password := c.PostForm("password")
 	passwordRepeat := c.PostForm("password_repeat")
 
+	redirectErr := func(msg string) {
+		c.Redirect(http.StatusTemporaryRedirect, "/signup?err="+url.QueryEscape(msg))
+	}
+
+	redirectErr("Username")
 	log.Printf("Received signup request - Username: %s", username)
 
 	// Validate form data
 	if username == "" || password == "" || passwordRepeat == "" {
 		log.Println("Empty fields detected")
-		c.HTML(http.StatusBadRequest, "signup.gohtml", gin.H{
-			"title": "Signup",
-			"page":  "Signup",
-			"err":   "All fields are required",
-		})
+		redirectErr("Missing fields")
 		return
 	}
 
 	// Validate email format
 	if !strings.Contains(username, "@") {
 		log.Println("Invalid email format - missing @")
-		c.HTML(http.StatusBadRequest, "signup.gohtml", gin.H{
-			"title": "Signup",
-			"page":  "Signup",
-			"err":   "Please include @ in your email address",
-		})
+		redirectErr("Please enter a valid email address")
 		return
 	}
 
 	// Check password match
 	if password != passwordRepeat {
 		log.Println("Passwords do not match")
-		c.HTML(http.StatusBadRequest, "signup.gohtml", gin.H{
-			"title": "Signup",
-			"page":  "Signup",
-			"err":   "Passwords do not match",
-		})
+		redirectErr("Password does not match")
 		return
 	}
 
 	// Check password strength
 	if !IsValidPassword(password) {
 		log.Println("Password too short")
-		c.HTML(http.StatusBadRequest, "signup.gohtml", gin.H{
-			"title": "Signup",
-			"page":  "Signup",
-			"err":   "Password must be at least 8 characters long",
-		})
+		redirectErr("Password too short")
 		return
 	}
 
@@ -105,22 +95,14 @@ func SignUpHandler(c *gin.Context) {
 	// Only return error if the error is not "record not found"
 	if err != nil && err.Error() != "record not found" {
 		log.Printf("Database error checking username: %v", err)
-		c.HTML(http.StatusInternalServerError, "signup.gohtml", gin.H{
-			"title": "Signup",
-			"page":  "Signup",
-			"err":   "Error checking username",
-		})
+		redirectErr("Something went wrong, try again later")
 		return
 	}
 
 	// If no error, user exists
 	if err == nil {
 		log.Println("Username already exists")
-		c.HTML(http.StatusConflict, "signup.gohtml", gin.H{
-			"title": "Signup",
-			"page":  "Signup",
-			"err":   "Username already exists",
-		})
+		redirectErr("Username already exists")
 		return
 	}
 
@@ -128,11 +110,7 @@ func SignUpHandler(c *gin.Context) {
 	hashedPassword, err := HashPassword(password)
 	if err != nil {
 		log.Printf("Error hashing password: %v", err)
-		c.HTML(http.StatusInternalServerError, "signup.gohtml", gin.H{
-			"title": "Signup",
-			"page":  "Signup",
-			"err":   "Error creating account",
-		})
+		redirectErr("Something went wrong, try again later - 2")
 		return
 	}
 
@@ -145,11 +123,7 @@ func SignUpHandler(c *gin.Context) {
 
 	if err := db.DB.Create(&newUser).Error; err != nil {
 		log.Printf("Error saving user to database: %v", err)
-		c.HTML(http.StatusInternalServerError, "signup.gohtml", gin.H{
-			"title": "Signup",
-			"page":  "Signup",
-			"err":   "Error creating account",
-		})
+		redirectErr("Something went wrong, try again later - 3")
 		return
 	}
 
