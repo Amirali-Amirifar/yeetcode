@@ -1,4 +1,7 @@
+version: "3.8"
+
 services:
+  # Postgres service
   postgres:
     image: postgres:latest
     container_name: yeetcode-postgres
@@ -14,9 +17,22 @@ services:
       - yeetcode-network
     restart: unless-stopped
 
+  # pgAdmin service
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: yeetcode-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    networks:
+      - yeetcode-network
+    restart: unless-stopped
 networks:
   yeetcode-network:
     driver: bridge
+
 
 volumes:
   postgres_data:

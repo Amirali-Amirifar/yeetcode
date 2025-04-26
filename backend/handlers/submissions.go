@@ -78,7 +78,6 @@ func CreateSubmission(c *gin.Context) {
 	c.JSON(http.StatusCreated, submission)
 }
 
-// ListSubmissions handles the API endpoint for listing a user's submissions
 func ListSubmissions(c *gin.Context) {
 	userId, role, err := CheckValidToken(c.Request)
 	if err != nil {
@@ -89,32 +88,38 @@ func ListSubmissions(c *gin.Context) {
 	var submissions []db.Submission
 	query := db.DB.Preload("Question").Preload("User")
 
-	// If user is querying their own submissions or admin is querying, filter by user
-	if queryUserId := c.Query("user_id"); queryUserId != "" {
-		// Convert string to uint
-		var queryUserIdUint uint
-		if _, err := fmt.Sscanf(queryUserId, "%d", &queryUserIdUint); err == nil && (queryUserIdUint == userId || role == "admin") {
-			query = query.Where("user_id = ?", queryUserIdUint)
-		} else {
-			// If conversion fails or user doesn't have permission, show only their own submissions
-			query = query.Where("user_id = ?", userId)
-		}
-	} else {
-		// If no user_id provided, show only their own submissions
-		query = query.Where("user_id = ?", userId)
+	// Require user_id to be provided
+	queryUserId := c.Query("user_id")
+	if queryUserId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id query parameter is required"})
+		return
 	}
 
-	// Filter by question if provided
+	// Convert user_id to uint
+	var queryUserIdUint uint
+	if _, err := fmt.Sscanf(queryUserId, "%d", &queryUserIdUint); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user_id"})
+		return
+	}
+
+	// Only allow user to query their own submissions unless admin
+	if queryUserIdUint != userId && role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
+		return
+	}
+
+	query = query.Where("user_id = ?", queryUserIdUint)
+
+	// Optional: Filter by question
 	if c.Query("question_id") != "" {
 		query = query.Where("question_id = ?", c.Query("question_id"))
 	}
 
-	// Filter by status if provided
+	// Optional: Filter by status
 	if c.Query("status") != "" {
 		query = query.Where("status = ?", c.Query("status"))
 	}
 
-	// Order by most recent
 	query = query.Order("created_at DESC")
 
 	if err := query.Find(&submissions).Error; err != nil {
@@ -263,7 +268,7 @@ func ShowSubmitProblemPage(c *gin.Context) {
 	var problem db.Question
 
 	// Load problem with test cases
-	if err := db.DB.Preload("TestCases").Preload("Owner").First(&problem, problemId).Error; err != nil {
+	if err := db.DB.Preload("Owner").First(&problem, problemId).Error; err != nil {
 		c.Redirect(http.StatusFound, "/problems")
 		return
 	}

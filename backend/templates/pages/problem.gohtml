@@ -28,26 +28,6 @@
                 <p class="text-gray-600">{{.Problem.Statement}}</p>
             </div>
 
-            <div class="mt-8">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Test Cases</h2>
-                <div class="space-y-4">
-                    {{range .Problem.TestCases}}
-                        <div class="bg-gray-50 p-4 rounded-md">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <h3 class="text-sm font-medium text-gray-500">Input</h3>
-                                    <pre class="mt-1 text-sm text-gray-900">{{.Input}}</pre>
-                                </div>
-                                <div>
-                                    <h3 class="text-sm font-medium text-gray-500">Output</h3>
-                                    <pre class="mt-1 text-sm text-gray-900">{{.Output}}</pre>
-                                </div>
-                            </div>
-                        </div>
-                    {{end}}
-                </div>
-            </div>
-
             {{if .IsLoggedIn}}
             <div class="mt-8">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Submit Solution</h2>
@@ -75,46 +55,6 @@
                 </form>
             </div>
             {{end}}
-
-            <div class="mt-8">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Recent Submissions</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Language</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {{range .Submissions}}
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{.User.Username}}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{.Language}}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        {{if eq .Status "accepted"}}bg-green-100 text-green-800
-                                        {{else if eq .Status "wrong_answer"}}bg-red-100 text-red-800
-                                        {{else if eq .Status "compile_error"}}bg-yellow-100 text-yellow-800
-                                        {{else}}bg-gray-100 text-gray-800{{end}}">
-                                        {{.Status}}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{.CreatedAt.Format "Jan 02, 2006 15:04:05"}}
-                                </td>
-                            </tr>
-                            {{end}}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     </div>
 </div>
