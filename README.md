@@ -59,6 +59,5 @@ To stop all Docker services:
 docker-compose -f docker-compose-dev.yml down
 ```
 
-## License
-
-[Add your license information here]
+## Team:
+Amirali amirifar, Hananeh Moballeghtohid, Fakhredin Abdi
