@@ -1,97 +1,64 @@
 # YeetCode
 
-A LeetCode clone built with Go and PostgreSQL.
+A coding platform built with Go and PostgreSQL.
 
 ## Prerequisites
-- Docker Desktop installed and running
-- Go 1.24 or later
-- Git
 
-## Setup Instructions
+- Docker and Docker Compose
+- Go (latest version recommended)
+- Node.js and npm (for frontend dependencies)
 
-### 1. Clone the Repository
+## Setup
+
+1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/yeetcode.git
+git clone <repository-url>
 cd yeetcode
 ```
 
-### 2. Configure Environment Variables
-Create a `.env` file in the root directory with the following content:
-```env
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=123456
-POSTGRES_DB=yeetcode
-PGADMIN_DEFAULT_EMAIL=admin@admin.com
-PGADMIN_DEFAULT_PASSWORD=admin
-```
-
-### 3. Start Docker Containers
+2. Start the database services using Docker Compose:
 ```bash
-# Start the containers
-docker-compose up -d
-
-# Verify containers are running
-docker ps
+docker-compose -f docker-compose-dev.yml up -d
 ```
 
-### 4. Access pgAdmin
-- Open http://localhost:5050 in your browser
-- Login credentials:
+3. Install frontend dependencies:
+```bash
+npm install
+```
+
+4. Build the frontend:
+```bash
+npm run build
+```
+
+## Running the Application
+
+1. Start the Go backend server:
+```bash
+go run cmd/main.go
+```
+
+## Database Access
+
+- PostgreSQL is running on port 5432
+- pgAdmin is accessible at http://localhost:5050
   - Email: admin@admin.com
-  - Password: admin
+  - Password: admin123
 
-### 5. Connect to PostgreSQL in pgAdmin
-1. Right-click on "Servers" in the left sidebar
-2. Select "Register" > "Server"
-3. In the "General" tab:
-   - Name: YeetCode DB
-4. In the "Connection" tab:
-   - Host: postgres
-   - Port: 5432
-   - Database: yeetcode
-   - Username: admin
-   - Password: 123456
+## Environment Configuration
 
-### 6. Build and Run the Application
+The application uses the following default database credentials:
+- Database: yeetcode
+- Username: admin
+- Password: 123456
+
+## Stopping Services
+
+To stop all Docker services:
 ```bash
-# Navigate to the backend directory
-cd ./backend
-# Install dependencies
-go mod tidy
-
-# Build the application
-go build ./... 
-
-# Run the application
-go run ./...                                                   
+docker-compose -f docker-compose-dev.yml down
 ```
 
-The application will be available at http://localhost:8081
+## License
 
-## Development
-- Backend API runs on port 8081
-- PostgreSQL runs on port 5432
-- pgAdmin runs on port 5050
-
-## Troubleshooting
-1. If containers fail to start:
-   ```bash
-   # Stop all containers
-   docker-compose down
-   
-   # Remove volumes
-   docker-compose down -v
-   
-   # Start fresh
-   docker-compose up -d
-   ```
-
-2. If you can't access pgAdmin:
-   - Verify Docker Desktop is running
-   - Check if port 5050 is available
-   - Try restarting Docker Desktop
-
-3. If database connection fails:
-   - Verify PostgreSQL container is running
-   - Check credentials in .env file
-   - Ensure pgAdmin connection details are correct
+[Add your license information here]
