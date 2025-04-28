@@ -33,8 +33,14 @@ npm run build
 
 ## Running the Application
 
-1. Start the Go backend server:
+1. Start the code runner service:
 ```bash
+go run ./judge/code_runner/main.go
+```
+
+2. In a separate terminal, start the Go backend server:
+```bash
+cd ./backend
 go run cmd/main.go
 ```
 
