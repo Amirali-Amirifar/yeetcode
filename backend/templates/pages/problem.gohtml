@@ -29,9 +29,12 @@
             </div>
 
             {{if .IsLoggedIn}}
-            <div class="mt-8">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Submit Solution</h2>
-                <form action="/problems/{{.Problem.Id}}/submit" method="POST" class="space-y-4">
+                <div class="mt-8">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Submit Solution</h2>
+                    <form action="/problems/{{.Problem.Id}}/submit" method="POST" class="space-y-4" id="solutionForm">
+                        <!-- Hidden Input for Code Field -->
+                        <input type="hidden" name="code" id="codeInput">
+
                         <div class="bg-white rounded-lg shadow-md p-6 h-full">
                             <div class="flex items-center justify-between mb-4">
                                 <label>
@@ -39,29 +42,47 @@
                                         <option value="go">Golang</option>
                                     </select>
                                 </label>
-                                <button class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                                <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                                     Submit Solution
                                 </button>
                             </div>
                             <div class="w-full h-full" style="height:400px;">
-                                <div id="editor" class="h-full rounded-lg "></div>
+                                <div id="editor" class="h-full rounded-lg"></div>
                             </div>
                         </div>
-                    <div class="flex justify-end">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Submit
-                        </button>
-                    </div>
-                </form>
-            </div>
+                        <div class="flex justify-end">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Submit
+                            </button>
+                        </div>
+                    </form>
+                </div>
             {{end}}
         </div>
     </div>
 </div>
+
 <script type="module">
     window.addEventListener("DOMContentLoaded", () => {
+        // Initialize the code editor using highlight.js and set up a default value
         const editor = window.highlight.createEditor("editor", `func main() {\n\t// your code here\n}`, "go");
+
+        // Define a function to get the value from the editor
         window.getUserCode = () => editor.getValue();
+
+        // Get the form and the hidden input element
+        const form = document.getElementById("solutionForm");
+        const codeInput = document.getElementById("codeInput");
+
+        // Add an event listener to the form on submission
+        form.addEventListener("submit", (event) => {
+            // Before submitting the form, set the value of the editor in the hidden input
+            codeInput.value = getUserCode();
+
+            // DEBUG: Log the editor value into the console to ensure it's set correctly
+            console.log("Editor value submitted:", codeInput.value);
+        });
     });
 </script>
-{{ template "footer" . }} 
+
+{{ template "footer" . }}

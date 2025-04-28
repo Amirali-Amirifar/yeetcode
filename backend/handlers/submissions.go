@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Amirali-Amirifar/yeetcode/backend/db"
+	"github.com/Amirali-Amirifar/yeetcode/backend/scheduler"
 	"github.com/gin-gonic/gin"
 )
 
@@ -287,18 +288,17 @@ func ShowSubmitProblemPage(c *gin.Context) {
 	}
 
 	data := gin.H{
-		"Title":        "Submit Solution",
-		"IsLoggedIn":   true,
-		"UserRole":     role,
-		"IsSignupPage": false,
-		"Problem":      problem,
-		"Submissions":  submissions,
+		"Title":         "Submit Solution",
+		"IsLoggedInaaa": true,
+		"UserRole":      role,
+		"IsSignupPage":  false,
+		"Problem":       problem,
+		"Submissions":   submissions,
 	}
 
 	c.HTML(http.StatusOK, "submit.gohtml", data)
 }
 
-// HandleSubmitSolution processes a form submission to submit a solution
 func HandleSubmitSolution(c *gin.Context) {
 	// Check if user is logged in
 	userId, _, err := CheckValidToken(c.Request)
@@ -316,33 +316,27 @@ func HandleSubmitSolution(c *gin.Context) {
 		return
 	}
 
-	// Check if problem exists and is published
+	// Check if problem exists
 	var problem db.Question
 	if err := db.DB.First(&problem, problemId).Error; err != nil {
 		c.Redirect(http.StatusFound, "/problems")
 		return
 	}
 
-	if problem.Status != "published" {
-		c.Redirect(http.StatusFound, "/problems")
-		return
-	}
-
-	// Create submission
+	// Create submission record using enum
 	submission := db.Submission{
 		Code:       code,
-		Status:     SubmissionStatus.Pending,
+		Status:     string(scheduler.StatusPending), // Use enum, convert to string if necessary
 		QuestionId: problem.Id,
 		UserId:     userId,
 	}
-
 	if err := db.DB.Create(&submission).Error; err != nil {
 		log.Printf("Error creating submission: %v", err)
 		c.Redirect(http.StatusFound, "/problems/"+problemId+"/submit?error=Failed+to+create+submission")
 		return
 	}
 
-	// Redirect to submission details page
+	// Redirect to the submissions page
 	c.Redirect(http.StatusFound, "/submissions/"+fmt.Sprintf("%d", submission.Id))
 }
 

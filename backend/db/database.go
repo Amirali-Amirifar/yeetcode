@@ -48,15 +48,18 @@ type Question struct {
 }
 
 type Submission struct {
-	Id          uint   `gorm:"primaryKey"`
-	Code        string `gorm:"not null"`
-	Status      string `gorm:"default:'pending'"` // 'pending', 'compile_error', 'wrong_answer', etc.
-	Output      string `gorm:""`
-	Error       string `gorm:""`
-	QuestionId  uint   `gorm:"not null"`
-	UserId      uint   `gorm:"not null"`
-	CreatedAt   time.Time
-	ProcessedAt *time.Time
+	Id             uint       `gorm:"primaryKey"`
+	Code           string     `gorm:"not null"`
+	Status         string     `gorm:"default:'pending'"` // 'pending', 'in_progress', 'timeout', 'failed', etc.
+	Output         string     `gorm:""`
+	Error          string     `gorm:""`
+	RetryCount     int        `gorm:"default:0"` // Track retries
+	LastAssignedAt *time.Time `gorm:""`          // Timestamp of last assignment
+	QuestionId     uint       `gorm:"not null"`
+	UserId         uint       `gorm:"not null"`
+	CreatedAt      time.Time
+	ProcessedAt    *time.Time
+	RunnerID       *string `gorm:""` // Optional: the specific runner assigned
 	// Relationships
 	User     *User     `gorm:"foreignKey:UserId"`
 	Question *Question `gorm:"foreignKey:QuestionId"`
